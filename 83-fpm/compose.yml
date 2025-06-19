@@ -1,0 +1,33 @@
+services:
+  app:
+    image: yovanggaanandhika/php:8.3-fpm-laravel
+    container_name: app
+    hostname: app
+    restart: always
+    working_dir: /var/www
+    environment:
+      APP_NAME: DKA
+      DB_CONNECTION: sqlite
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.80"
+          memory: 128M
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        host_ip: 0.0.0.0
+    networks:
+      - default
+
+
+volumes:
+  mariadb_data:
+    driver: local
+networks:
+  default:
+    driver: bridge
