@@ -17,7 +17,7 @@ RUN apk update && apk add --no-cache \
   php83-pdo_mysql php83-pdo_sqlite php83-simplexml php83-soap php83-sockets \
   php83-sodium php83-sqlite3 php83-session php83-tokenizer php83-xml php83-xmlreader \
   php83-xmlwriter php83-zip php83-openssl php83-ldap \
-  autoconf g++ make php83-dev php83-pear  \
+  autoconf g++ make php83-dev php83-pear \
   && npm install -g yarn \
   && pecl install imagick \
   && echo "extension=imagick.so" > /etc/php83/conf.d/00_imagick.ini \
@@ -44,8 +44,6 @@ RUN curl -sS https://getcomposer.org/installer | php && mv composer.phar /usr/lo
 WORKDIR /var/www
 # Install Laravel On Global
 RUN composer create-project laravel/laravel .
-# Hapus Env Bawaan
-RUN rm -rf .env
 # set permission laravel storage
 RUN chown -R www-data:www-data storage database bootstrap/cache && chmod -R 775 storage database bootstrap/cache
 # Configure entrypoint script
