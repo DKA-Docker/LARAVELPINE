@@ -13,7 +13,6 @@ on:
     paths:
       - '83-fpm/**'
       - '.github/workflows/task.83.fpm.yml'
-
 env:
   APP_DIRECTORY: 83-fpm
   DOCKER_USERNAME: ${{ secrets.DKA_DOCKER_USERNAME }}
