@@ -62,6 +62,6 @@ jobs:
           file: ./${{ env.APP_DIRECTORY }}/Dockerfile
           push: true
           platforms: linux/amd64,linux/386,linux/arm64/v8,linux/arm/v7,linux/ppc64le
-          tags: ${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}-laravel
+          tags: ${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
           cache-from: type=registry,ref=${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_REPO }}:buildcache
           cache-to: type=registry,ref=${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_REPO }}:buildcache,mode=max
