@@ -7,7 +7,6 @@ RUN apk update && apk add --no-cache \
   tzdata bash nano curl git zip unzip openssl \
   nginx nodejs npm \
   iputils iproute2 \
-  certbot certbot-dns-cloudflare \
   imagemagick imagemagick-dev \
   libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev zlib-dev \
   icu-dev gettext-dev libxml2-dev oniguruma-dev \
@@ -49,7 +48,7 @@ RUN rm -rf .env
 # set permission laravel storage
 RUN chown -R www-data:www-data storage database bootstrap/cache && chmod -R 775 storage database bootstrap/cache
 # Configure entrypoint script
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY bin/* /usr/local/bin/
 # set Execution bin dir
 RUN chmod +x /usr/local/bin/*
 # Expose ports
