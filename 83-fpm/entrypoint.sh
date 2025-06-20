@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+echo "setup privileges ..."
+chown -R www-data:www-data storage database bootstrap/cache
+
+echo "set level privileges to storage, database, cache ..."
+chmod -R 775 storage database bootstrap/cache
+
 # Start PHP-FPM
 echo "Starting PHP-FPM System..."
 php-fpm83 -F &  # Jalankan PHP-FPM di latar belakang
