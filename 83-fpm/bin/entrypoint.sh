@@ -2,9 +2,8 @@
 set -e
 
 PERMISSION_ROOT=${DKA_PERMISSION_ROOT:-false}
-
-COMPOSER_INSTALL=${DKA_COMPOSER_INSTALL:-false}
-ARTISAN_MODE=${DKA_ARTISAN_MODE:-dev}
+COMPOSER_INSTALL=${APP_ENV:-local}
+ARTISAN_MODE=${APP_ENV:-local}
 
 permission_command() {
   if [ "$PERMISSION_ROOT" = "true" ]; then
@@ -15,18 +14,18 @@ permission_command() {
 
 artisan_command() {
   echo "Artisan cache detected $ARTISAN_MODE ..."
-  if [ "$ARTISAN_MODE" = "prod" ]; then
+  if [ "$ARTISAN_MODE" = "production" ]; then
     php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan storage:link
-  elif [ "$ARTISAN_MODE" = "dev" ]; then
+  elif [ "$ARTISAN_MODE" = "local" ]; then
     php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan storage:link
   fi
 }
 
 composer_command() {
-  if [ "$COMPOSER_INSTALL" = "prod" ]; then
+  if [ "$COMPOSER_INSTALL" = "production" ]; then
     echo "detect composer install before run as prod ..."
     composer install --no-dev --optimize-autoloader
-  elif [ "$COMPOSER_INSTALL" = "dev" ]; then
+  elif [ "$COMPOSER_INSTALL" = "local" ]; then
      echo "detect composer install before run as dev ..."
      composer install
   fi

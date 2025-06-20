@@ -15,8 +15,7 @@ services:
       APP_TIMEZONE: Asia/Makassar
       DB_CONNECTION: sqlite
 
-      DKA_COMPOSER_INSTALL: dev
-      DKA_ARTISAN_MODE: dev
+      DKA_PERMISSION_ROOT: true
     deploy:
       resources:
         limits:
