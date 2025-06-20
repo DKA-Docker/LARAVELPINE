@@ -42,7 +42,7 @@ RUN curl -sS https://getcomposer.org/installer | php && mv composer.phar /usr/lo
 # Set the working directory
 WORKDIR /var/www
 # Install Laravel On Global
-RUN composer create-project laravel/laravel .
+RUN composer create-project laravel/laravel . && composer require barryvdh/laravel-debugbar --dev
 # Hapus Env Bawaan
 RUN rm -rf .env
 # set permission laravel storage
