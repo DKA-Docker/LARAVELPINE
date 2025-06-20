@@ -2,8 +2,16 @@
 set -e
 
 PERMISSION_ROOT=${DKA_PERMISSION_ROOT:-false}
-COMPOSER_INSTALL=${APP_ENV:-local}
-ARTISAN_MODE=${APP_ENV:-local}
+AUTO_MIGRATE=${DKA_AUTO_MIGRATE:-false}
+ENV=${APP_ENV:-local}
+COMPOSER_INSTALL=${ENV:-local}
+ARTISAN_MODE=${ENV:-local}
+
+artisan_migrate() {
+  if [[ "$AUTO_MIGRATE" == "true" && "$ENV" == "local" ]]; then
+    php artisan migrate
+  fi
+}
 
 permission_command() {
   if [ "$PERMISSION_ROOT" = "true" ]; then
@@ -54,5 +62,6 @@ running_engine() {
 permission_command
 composer_command
 artisan_command
+artisan_migrate
 running_engine "$@"
 

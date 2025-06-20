@@ -6,6 +6,8 @@ services:
     hostname: dka-example-laravelpine-app
     restart: always
     pull_policy: always
+    depends_on:
+      - mariadb
     environment:
       APP_NAME: DKA
       APP_ENV: local
