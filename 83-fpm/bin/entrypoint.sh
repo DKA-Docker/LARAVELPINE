@@ -3,8 +3,8 @@ set -e
 
 PERMISSION_ROOT=${DKA_PERMISSION_ROOT:-false}
 
-COMPOSER_INSTALL=${DKA_COMPOSER_INSTALL:-dev}
-ARTISAN_CACHE=${DKA_ARTISAN_CACHE:-false}
+COMPOSER_INSTALL=${DKA_COMPOSER_INSTALL:-false}
+ARTISAN_MODE=${DKA_ARTISAN_MODE:-dev}
 
 permission_command() {
   if [ "$PERMISSION_ROOT" = "true" ]; then
@@ -14,10 +14,10 @@ permission_command() {
 }
 
 artisan_command() {
-  if [ "$ARTISAN_CACHE" = "true" ]; then
-    echo "Artisan cache detected true ..."
+  echo "Artisan cache detected $ARTISAN_MODE ..."
+  if [ "$ARTISAN_MODE" = "prod" ]; then
     php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan storage:link
-  else
+  elif [ "$ARTISAN_MODE" = "dev" ]; then
     php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan storage:link
   fi
 }
