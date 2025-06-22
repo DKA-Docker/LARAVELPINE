@@ -34,7 +34,7 @@ COPY .config/php /etc/php83
 # Create Log Dir
 COPY .config/log /var/log/
 # Set permissions
-RUN chown -R www-data:www-data /var/www && find /var/www -type d -exec chmod 774 {} \; && find /var/www -type f -exec chmod 774 {} \;
+RUN chown -R www-data:www-data /var/www
 # hapus folder bawaan nginx
 RUN rm -rf /var/www/localhost
 # Install Composer
@@ -45,8 +45,6 @@ WORKDIR /var/www
 RUN composer create-project laravel/laravel . && composer require barryvdh/laravel-debugbar --dev
 # Hapus Env Bawaan
 RUN rm -rf .env
-# set permission laravel storage
-RUN chown -R www-data:www-data storage database bootstrap/cache && chmod -R 775 storage database bootstrap/cache
 # Configure entrypoint script
 COPY bin/* /usr/local/bin/
 # set Execution bin dir
