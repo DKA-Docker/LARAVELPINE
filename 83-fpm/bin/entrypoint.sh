@@ -7,9 +7,11 @@ permission_command() {
   if [ "$ENV" == "local" ]; then
     echo "in local env set www-data & storage, database, cache allow all..."
     chown -R www-data:www-data ./* && chmod -R 777 ./*
+    echo "set www-data & storage, database, cache . allow all successfully ..."
   elif [ "$ENV" == "production" ]; then
-    echo "prepare privileges www-data & storage, database, cache . protection writed ..."
+    echo "prepare privileges www-data & storage, database, cache . protection writing ..."
     chown -R www-data:www-data ./* && chmod -R 644 ./* && chmod -R 775 storage database bootstrap/cache
+    echo "set www-data & storage, database, cache . protection successfully ..."
   fi
 }
 
@@ -26,9 +28,11 @@ composer_command() {
   if [ "$ENV" = "production" ]; then
     echo "detect composer install before run as prod ..."
     composer install --no-dev --optimize-autoloader
+    echo "composer install run as prod successfully..."
   elif [ "$ENV" = "local" ]; then
      echo "detect composer install before run as dev ..."
      composer install
+     echo "composer install run as dev successfully..."
   fi
 }
 
