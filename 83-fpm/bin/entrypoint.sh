@@ -5,13 +5,15 @@ ENV=${APP_ENV:-local}
 
 permission_command() {
   if [ "$ENV" == "local" ]; then
-    echo "in local env set www-data & storage, database, cache allow all..."
-    chown -R www-data:www-data ./* && chmod -R 777 ./*
-    echo "set www-data & storage, database, cache . allow all successfully ..."
+    echo "[LOCAL ENV] Granting full access to www-data (except .git)..."
+    find . -mindepth 1 -not -path "./.git*" -exec chown -R www-data:www-data {} + -exec chmod -R 777 {} +
+    echo "[LOCAL ENV] Permission set to 777 successfully ..."
   elif [ "$ENV" == "production" ]; then
-    echo "prepare privileges www-data & storage, database, cache . protection writing ..."
-    chown -R www-data:www-data ./* && chmod -R 644 ./* && chmod -R 775 storage database bootstrap/cache
-    echo "set www-data & storage, database, cache . protection successfully ..."
+    echo "[PRODUCTION ENV] Locking down permissions, except for writable dirs..."
+    chown -R www-data:www-data . && \
+    find . -mindepth 1 -not -path "./.git*" -exec chmod 644 {} + && \
+    chmod -R 775 storage database bootstrap/cache
+    echo "[PRODUCTION ENV] Permissions tightened successfully (secure AF 🔒)"
   fi
 }
 
