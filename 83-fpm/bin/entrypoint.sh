@@ -12,7 +12,7 @@ permission_command() {
     echo "[PRODUCTION ENV] Locking down permissions, except for writable dirs..."
     chown -R www-data:www-data . && \
     find . -mindepth 1 -not -path "./.git*" -exec chmod 644 {} + && \
-    chmod -R 775 storage database bootstrap/cache
+    chmod -R 775 storage database public bootstrap/cache
     echo "[PRODUCTION ENV] Permissions tightened successfully (secure AF 🔒)"
   fi
 }
