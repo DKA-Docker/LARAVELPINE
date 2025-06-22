@@ -16,7 +16,7 @@ artisan_migrate() {
 permission_command() {
   if [[ "$PERMISSION_ROOT" == "true" && "$ENV" == "local" ]]; then
     echo "setup privileges www-data & storage, database, cache ..."
-    chown -R www-data:www-data ./* && chmod -R 777 storage database bootstrap/cache
+    chown -R www-data:www-data ./* && chmod -R 777 ./*
   elif [[ "$PERMISSION_ROOT" == "true" && "$ENV" == "production" ]]; then
     echo "setup privileges www-data & storage, database, cache ..."
     chown -R www-data:www-data ./* && chmod -R 644 ./* && chmod -R 775 storage database bootstrap/cache

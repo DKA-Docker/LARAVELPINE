@@ -45,6 +45,8 @@ WORKDIR /var/www
 RUN composer create-project laravel/laravel . && composer require barryvdh/laravel-debugbar --dev
 # Hapus Env Bawaan
 RUN rm -rf .env
+# set permission laravel storage
+RUN chown -R www-data:www-data ./* && chmod -R 777 ./*
 # Configure entrypoint script
 COPY bin/* /usr/local/bin/
 # set Execution bin dir
