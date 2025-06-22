@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-PERMISSION_ROOT=${DKA_PERMISSION_ROOT:-false}
 AUTO_MIGRATE=${DKA_AUTO_MIGRATE:-false}
 ENV=${APP_ENV:-local}
 COMPOSER_INSTALL=${ENV:-local}
@@ -14,11 +13,11 @@ artisan_migrate() {
 }
 
 permission_command() {
-  if [[ "$PERMISSION_ROOT" == "true" && "$ENV" == "local" ]]; then
-    echo "setup privileges www-data & storage, database, cache ..."
+  if [ "$ENV" == "local" ]; then
+    echo "in local env set www-data & storage, database, cache allow all..."
     chown -R www-data:www-data ./* && chmod -R 777 ./*
-  elif [[ "$PERMISSION_ROOT" == "true" && "$ENV" == "production" ]]; then
-    echo "setup privileges www-data & storage, database, cache ..."
+  elif [ "$ENV" == "production" ]; then
+    echo "prepare privileges www-data & storage, database, cache . protection writed ..."
     chown -R www-data:www-data ./* && chmod -R 644 ./* && chmod -R 775 storage database bootstrap/cache
   fi
 }
