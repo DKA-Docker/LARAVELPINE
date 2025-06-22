@@ -59,6 +59,5 @@ running_engine() {
 permission_command
 composer_command
 artisan_command
-artisan_migrate
 running_engine "$@"
 
