@@ -5,15 +5,19 @@ ENV=${APP_ENV:-local}
 
 permission_command() {
   if [ "$ENV" == "local" ]; then
-    echo "[LOCAL ENV] Granting full access to www-data (except .git)..."
-    find . -mindepth 1 -not -path "./.git*" -exec chown -R www-data:www-data {} + -exec chmod -R 777 {} +
-    echo "[LOCAL ENV] Permission set to 777 successfully ..."
+    echo "[LOCAL ENV] Granting dev-friendly permissions..."
+    chown -R www-data:www-data .
+    find . -type d -not -path "./.git*" -exec chmod 775 {} \;
+    find . -type f -not -path "./.git*" -exec chmod 664 {} \;
+    echo "[LOCAL ENV] Folder => 775, File => 664. Aman buat develop, gak kebablasan 😎"
+
   elif [ "$ENV" == "production" ]; then
-    echo "[PRODUCTION ENV] Locking down permissions, except for writable dirs..."
-    chown -R www-data:www-data . && \
-    find . -mindepth 1 -not -path "./.git*" -exec chmod 644 {} + && \
-    chmod -R 775 storage database public bootstrap/cache
-    echo "[PRODUCTION ENV] Permissions tightened successfully (secure AF 🔒)"
+    echo "[PRODUCTION ENV] Locking down permissions..."
+    chown -R www-data:www-data .
+    find . -type d -not -path "./.git*" -exec chmod 755 {} \;
+    find . -type f -not -path "./.git*" -exec chmod 644 {} \;
+    chmod -R 775 storage bootstrap/cache database
+    echo "[PRODUCTION ENV] ✅ Permissions locked. Laravel secure like a vault 🔒"
   fi
 }
 
