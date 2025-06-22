@@ -1,16 +1,7 @@
 #!/bin/bash
 set -e
 
-AUTO_MIGRATE=${DKA_AUTO_MIGRATE:-false}
 ENV=${APP_ENV:-local}
-COMPOSER_INSTALL=${ENV:-local}
-ARTISAN_MODE=${ENV:-local}
-
-artisan_migrate() {
-  if [[ "$AUTO_MIGRATE" == "true" && "$ENV" == "local" ]]; then
-    php artisan migrate
-  fi
-}
 
 permission_command() {
   if [ "$ENV" == "local" ]; then
@@ -23,19 +14,19 @@ permission_command() {
 }
 
 artisan_command() {
-  echo "Artisan cache detected $ARTISAN_MODE ..."
-  if [ "$ARTISAN_MODE" = "production" ]; then
+  echo "Running Artisan mode $ENV ..."
+  if [ "$ENV" = "production" ]; then
     php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan storage:link
-  elif [ "$ARTISAN_MODE" = "local" ]; then
+  elif [ "$ENV" = "local" ]; then
     php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan storage:link
   fi
 }
 
 composer_command() {
-  if [ "$COMPOSER_INSTALL" = "production" ]; then
+  if [ "$ENV" = "production" ]; then
     echo "detect composer install before run as prod ..."
     composer install --no-dev --optimize-autoloader
-  elif [ "$COMPOSER_INSTALL" = "local" ]; then
+  elif [ "$ENV" = "local" ]; then
      echo "detect composer install before run as dev ..."
      composer install
   fi
