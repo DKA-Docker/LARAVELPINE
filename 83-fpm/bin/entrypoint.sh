@@ -5,10 +5,11 @@ ENV=${APP_ENV:-local}
 
 permission_command() {
   if [ "$ENV" == "local" ]; then
-    echo "[LOCAL ENV] Granting dev-friendly permissions..."
+    echo "[LOCAL ENV] Granting full 777 permissions to all files and folders..."
     chown -R www-data:www-data .
+    # Semua file dan folder (kecuali .git) di-set 777
     find . -mindepth 1 -not -path "./.git*" -exec chown -R www-data:www-data {} + -exec chmod -R 777 {} +
-    echo "[LOCAL ENV] Folder => 775, File => 664. Aman buat develop, gak kebablasan 😎"
+    echo "[LOCAL ENV] ✅ Semua file & folder => 777. Gaskan ngoding! 🛠️"
   elif [ "$ENV" == "production" ]; then
     echo "[PRODUCTION ENV] Locking down permissions..."
     chown -R www-data:www-data .
