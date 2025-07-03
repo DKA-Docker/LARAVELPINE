@@ -68,7 +68,7 @@ running_server() {
         wait
     elif [ "$ENV" = "local" ]; then
        echo "Logging Health Monitoring started ..."
-         php artisan serve
+         php artisan serve --host=0.0.0.0 --port=80
     fi
 }
 
