@@ -3,22 +3,23 @@ set -e
 
 ENV=${APP_ENV:-local}
 
-permission_command() {
-  if [ "$ENV" == "local" ]; then
-    echo "[LOCAL ENV] Granting full 777 permissions to all files and folders..."
-    chown -R www-data:www-data .
-    # Semua file dan folder (kecuali .git) di-set 777
-    find . -mindepth 1 -not -path "./.git*" -exec chown -R www-data:www-data {} + -exec chmod -R 777 {} +
-    echo "[LOCAL ENV] ✅ Semua file & folder => 777. Gaskan ngoding! 🛠️"
-  elif [ "$ENV" == "production" ]; then
-    echo "[PRODUCTION ENV] Locking down permissions..."
-    chown -R www-data:www-data .
-    find . -type d -not -path "./.git*" -exec chmod 755 {} \;
-    find . -type f -not -path "./.git*" -exec chmod 644 {} \;
-    chmod -R 775 storage bootstrap/cache database
-    echo "[PRODUCTION ENV] ✅ Permissions locked. Laravel secure like a vault 🔒"
-  fi
-}
+#permission_command() {
+#  if [ "$ENV" == "local" ]; then
+#    echo "[LOCAL ENV] Granting full 777 permissions to all files and folders..."
+#    chown -R www-data:www-data .
+#    # Semua file dan folder (kecuali .git) di-set 777
+#    find . -mindepth 1 -not -path "./.git*" -exec chown -R www-data:www-data {} + -exec chmod -R 777 {} +
+#    echo "[LOCAL ENV] ✅ Semua file & folder => 777. Gaskan ngoding! 🛠️"
+#  elif [ "$ENV" == "production" ]; then
+#    echo "[PRODUCTION ENV] Locking down permissions..."
+#    chown -R www-data:www-data .
+#    find . -type d -not -path "./.git*" -exec chmod 755 {} \;
+#    find . -type f -not -path "./.git*" -exec chmod 644 {} \;
+#    chmod -R 775 storage bootstrap/cache database
+#    echo "[PRODUCTION ENV] ✅ Permissions locked. Laravel secure like a vault 🔒"
+#  fi
+#}
+
 
 artisan_command() {
   echo "Running Artisan mode $ENV ..."
@@ -41,6 +42,20 @@ composer_command() {
   fi
 }
 
+vite_command() {
+  if [ "$ENV" = "production" ]; then
+    echo "Running Frontend Build ..."
+    yarn run build
+    echo "Running Frontend Build successfully..."
+  elif [ "$ENV" = "local" ]; then
+     echo "Running dev Server Vite."
+     yarn run dev &
+     echo "Running dev Server Vite. successfully..."
+  fi
+}
+
+
+
 running_engine() {
   # Start PHP-FPM
   echo "Starting PHP-FPM System..."
@@ -61,8 +76,8 @@ running_engine() {
   fi
 }
 
-permission_command
 composer_command
 artisan_command
+vite_command
 running_engine "$@"
 
