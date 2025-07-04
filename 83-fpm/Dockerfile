@@ -5,7 +5,7 @@ LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
 # Install system packages & PHP + build deps
 RUN apk update && apk add --no-cache \
   tzdata bash nano curl git zip unzip openssl \
-  nginx nodejs npm \
+  nginx nodejs npm mariadb-client mariadb-utils \
   iputils iproute2 \
   imagemagick imagemagick-dev \
   libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev zlib-dev \
@@ -52,6 +52,6 @@ COPY bin/* /usr/local/bin/
 # set Execution bin dir
 RUN chmod +x /usr/local/bin/*
 # Expose ports
-EXPOSE 80
+EXPOSE 80 5173
 # Set the entrypoint to the script
 ENTRYPOINT ["entrypoint.sh"]
