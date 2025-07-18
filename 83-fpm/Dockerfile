@@ -44,7 +44,7 @@ WORKDIR /var/www
 # Install Laravel On Global
 RUN composer create-project laravel/laravel . && composer require barryvdh/laravel-debugbar --dev
 # Hapus Env Bawaan
-RUN rm -rf .env
+RUN rm -rf .env composer.lock yarn.lock package.lock
 # set permission laravel storage
 RUN chown -R www-data:www-data . && chmod -R 777 .
 # Configure entrypoint script
