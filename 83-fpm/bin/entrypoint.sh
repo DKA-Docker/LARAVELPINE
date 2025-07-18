@@ -34,7 +34,7 @@ install_yarn_dependencies() {
   echo "📦 Installing dependencies for environment: $ENV ..."
 
   if [ "$ENV" = "production" ]; then
-    if yarn install --frozen-lockfile --production; then
+    if yarn install --frozen-lockfile; then
       echo "✅ Production dependencies installed successfully."
     else
       echo "⚠️  yarn install (production) failed, but continuing..."
