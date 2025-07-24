@@ -23,7 +23,7 @@ installing_packages() {
 optimize_for_prod_env() {
   echo "🧪 Optimizing production dependencies..."
   composer install --no-dev --optimize-autoloader || echo "⚠️ composer --no-dev failed"
-  yarn install --frozen-lockfile --no-dev || echo "⚠️ yarn --no-dev failed"
+  yarn install --frozen-lockfile --production || echo "⚠️ yarn --no-dev failed"
 }
 
 building_assets() {
