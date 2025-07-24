@@ -69,10 +69,10 @@ running_dev_server() {
   echo "🛠️ Running local dev servers..."
   if [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
     echo "🟢 Starting Vite dev server..."
-    yarn dev &  # Run Vite in background
+    yarn dev --host &  # Run Vite in background
   elif [ -f "webpack.mix.js" ]; then
     echo "🟢 Starting Laravel Mix watcher..."
-    yarn watch &  # Run watcher in background
+    yarn watch --host &  # Run watcher in background
   else
     echo "⚠️ No dev server config detected."
   fi

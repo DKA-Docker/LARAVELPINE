@@ -37,6 +37,10 @@ services:
         published: 80
         protocol: tcp
         host_ip: 0.0.0.0
+      - target: 5173
+        published: 5173
+        protocol: tcp
+        host_ip: 0.0.0.0
     #- uncomment for sync project and data in container
     #volumes:
     #  - type: bind
