@@ -3,127 +3,99 @@ set -e
 
 ENV=${APP_ENV:-local}
 
-optimize_for_prod_env() {
-  if composer install --no-dev --optimize-autoloader; then
-    echo "✅ Production dependencies installed successfully."
+# Cek dependencies penting
+command -v composer >/dev/null 2>&1 || { echo >&2 "❌ Composer not found."; exit 1; }
+command -v yarn >/dev/null 2>&1 || { echo >&2 "❌ Yarn not found."; exit 1; }
+
+installing_packages() {
+  echo "📦 Installing packages for: $ENV"
+  if [ "$ENV" = "production" ]; then
+    # Step 1: Install full composer & yarn for building
+    composer install || echo "⚠️ composer install failed"
+    yarn install --frozen-lockfile || echo "⚠️ yarn install failed"
   else
-    echo "⚠️  yarn install (production) failed, but continuing..."
-  fi
-  if yarn install --frozen-lockfile --no-dev; then
-    echo "✅ Production dependencies installed successfully."
-  else
-    echo "⚠️  yarn install (production) failed, but continuing..."
-  fi
-}
-building_yarn() {
-  echo "🏗️  Running Frontend Build ..."
-  if [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
-    ############################################################
-    echo "🟢 Detected Vite config, using yarn build..."
-    if yarn build; then
-      echo "✅ Vite build completed."
-    else
-      echo "⚠️  yarn build failed or script not found!"
-    fi
-  elif [ -f "webpack.mix.js" ]; then
-    ############################################################
-    echo "🟢 Detected Laravel Mix (Webpack), using yarn prod..."
-    if yarn prod; then
-      echo "✅ Webpack build completed."
-    else
-      echo "⚠️  yarn prod failed or script not found!"
-    fi
-    ############################################################
-  else
-    echo "⚠️  No build config found (vite.config.* or webpack.mix.js). Skipping build."
+    # Local dev install
+    composer install || echo "⚠️ composer install failed"
+    yarn install || echo "⚠️ yarn install failed"
   fi
 }
 
-installing_packages() {
-  echo "🛠️  Running NodeJS & Composer Package Combo..."
-  ################## COMPOSER INSTALL ##################
-  if composer install; then
-      echo "Installing all composer packages Successfully."
-  else
-    echo "⚠️  composer install failed, but continuing..."
-  fi
-  ################## YARN INSTALL ######################
-  if yarn install; then
-    echo "✅ Local dependencies installed successfully."
-  else
-    echo "⚠️  yarn install (local) failed, but continuing..."
-  fi
-  # building yarn
+optimize_for_prod_env() {
+  echo "🧪 Optimizing production dependencies..."
+  composer install --no-dev --optimize-autoloader || echo "⚠️ composer --no-dev failed"
+  yarn install --frozen-lockfile --no-dev || echo "⚠️ yarn --no-dev failed"
 }
+
+building_assets() {
+  echo "🏗️  Building frontend assets..."
+  if [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
+    echo "🟢 Vite detected"
+    yarn build || echo "⚠️ yarn build failed!"
+  elif [ -f "webpack.mix.js" ]; then
+    echo "🟢 Laravel Mix (Webpack) detected"
+    yarn prod || echo "⚠️ yarn prod failed!"
+  else
+    echo "⚠️ No frontend build config detected. Skipping..."
+  fi
+}
+
 artisan_command() {
+  echo "🧹 Artisan init for: $ENV"
   installing_packages
-  echo "🧹 Reverting Artisan mode: $ENV ..."
   if [ "$ENV" = "production" ]; then
-    building_yarn
-    php artisan config:clear  || echo "⚠️  config:clear failed, skipping..."
-    php artisan route:clear   || echo "⚠️  route:clear failed, skipping..."
-    php artisan view:clear    || echo "⚠️  view:clear failed, skipping..."
-    php artisan event:clear   || echo "⚠️  event:clear failed, skipping..."
-    php artisan cache:clear   || echo "⚠️  app cache:clear failed, skipping..."
-    php artisan queue:restart   || echo "⚠️  Queue restart failed, skipping..."
-    echo "🧼 All production caches cleared and queue/migrate handled."
-  elif [ "$ENV" = "local" ]; then
-    php artisan config:cache  || echo "⚠️  config:cache failed, skipping..."
-    php artisan view:clear    || echo "⚠️  view:clear failed, skipping..."
-    php artisan route:clear   || echo "⚠️  route:clear failed, skipping..."
-    php artisan event:clear   || echo "⚠️  event:clear failed, skipping..."
-    php artisan storage:link  || echo "⚠️  storage:link failed, skipping..."
-    php artisan migrate --force || echo "⚠️  Migration failed, skipping..."
-    php artisan queue:restart   || echo "⚠️  Queue restart failed, skipping..."
-    echo "💻 Local environment dev-safe & up-to-date."
+    building_assets
+    optimize_for_prod_env
+    php artisan config:cache  || echo "⚠️ config:cache failed"
+    php artisan route:cache   || echo "⚠️ route:cache failed"
+    php artisan view:cache    || echo "⚠️ view:cache failed"
+    php artisan event:cache   || echo "⚠️ event:cache failed"
+    php artisan queue:restart || echo "⚠️ queue:restart failed"
+    php artisan storage:link  || echo "⚠️ storage:link failed"
+    echo "✅ Production ready."
+  else
+    php artisan config:clear  || echo "⚠️ config:clear failed"
+    php artisan route:clear   || echo "⚠️ route:clear failed"
+    php artisan view:clear    || echo "⚠️ view:clear failed"
+    php artisan event:clear   || echo "⚠️ event:clear failed"
+    php artisan storage:link  || echo "⚠️ storage:link failed"
+    php artisan migrate --force || echo "⚠️ migration failed"
+    php artisan queue:restart || echo "⚠️ queue:restart failed"
+    echo "💻 Local environment is clean & updated."
   fi
 }
+
 running_dev_server() {
   artisan_command
-  echo "🛠️  Running Dev Server..."
+  echo "🛠️ Running local dev servers..."
   if [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
-    echo "🟢 Detected Vite config, using yarn dev..."
-    if yarn dev & then
-      echo "✅ Dev server (Vite) is running in background."
-    else
-      echo "⚠️  yarn dev failed or script not found!"
-    fi
+    echo "🟢 Starting Vite dev server..."
+    yarn dev &  # Run Vite in background
   elif [ -f "webpack.mix.js" ]; then
-    echo "🟢 Detected Laravel Mix (Webpack), using yarn watch..."
-    if yarn watch & then
-      echo "✅ Dev server (Webpack) is running in background."
-    else
-      echo "⚠️  yarn watch failed or script not found!"
-    fi
+    echo "🟢 Starting Laravel Mix watcher..."
+    yarn watch &  # Run watcher in background
   else
-    echo "⚠️  No dev config found (vite.config.* or webpack.mix.js). Skipping dev server."
+    echo "⚠️ No dev server config detected."
   fi
   php artisan serve --host=0.0.0.0 --port=80
 }
+
 running_prod_server() {
-  optimize_for_prod_env
   artisan_command
-  # Start PHP-FPM
-  echo "Starting PHP-FPM System..."
-  php-fpm83 -F &  # Jalankan PHP-FPM di latar belakang
-  # Start Nginx
-  echo "Starting Nginx System..."
-  nginx &  # Jalankan Nginx di latar belakang
-  # If no arguments were passed, wait for background processes
-  echo "Logging Health Monitoring started ..."
+  echo "🚀 Starting production server stack..."
+  php-fpm83 -F &  # PHP-FPM in foreground mode
+  nginx &         # Start Nginx in background
+  echo "📈 Health monitoring active."
   wait
 }
+
 running_server() {
+  echo "🧭 Starting Laravel App in $ENV mode..."
   if [ "$ENV" = "production" ]; then
-    echo "Logging Health Monitoring started ..."
     running_prod_server
-  elif [ "$ENV" = "local" ]; then
-    echo "Logging Health Monitoring started ..."
+  else
     running_dev_server
   fi
 }
 
+# GO GO GO
 running_server
-
-
-
