@@ -16,10 +16,13 @@ RUN apk update && apk add --no-cache \
   php83-pdo_mysql php83-pdo_sqlite php83-simplexml php83-soap php83-sockets \
   php83-sodium php83-sqlite3 php83-session php83-tokenizer php83-xml php83-xmlreader \
   php83-xmlwriter php83-zip php83-openssl php83-ldap \
-  autoconf g++ make php83-dev php83-pear  \
+  autoconf g++ make php83-dev php83-pear \
   && npm install -g yarn \
-  && pecl install imagick \
+  && pecl install imagick raphf propro pecl_http \
   && echo "extension=imagick.so" > /etc/php83/conf.d/00_imagick.ini \
+  && echo "extension=raphf.so"   > /etc/php83/conf.d/00_raphf.ini \
+  && echo "extension=propro.so"  > /etc/php83/conf.d/00_propro.ini \
+  && echo "extension=http.so"    > /etc/php83/conf.d/00_http.ini \
   && rm -rf /tmp/pear /var/cache/apk/*
 # Set the timezone (e.g., Asia/Makassar)
 ENV TZ=Asia/Makassar
