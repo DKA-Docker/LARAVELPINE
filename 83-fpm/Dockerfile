@@ -1,9 +1,16 @@
-# Use the official Alpine Linux image as a base
+# ============ Stage 1: Build ext-http di Debian ============
+FROM php:8.3-cli as extbuilder
+
+RUN apt update && apt install -y git unzip gcc g++ make libcurl4-openssl-dev libevent-dev zlib1g-dev \
+  && pecl install raphf-2.0.1 \
+  && pecl install propro-2.1.0 \
+  && pecl install pecl_http-4.2.2
+
+# ============ Stage 2: Alpine Final ============
 FROM alpine:3.21.0
-# Maintainer
+
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
-# Install system packages & PHP + build deps
-# Tambahan dalam blok apk
+
 RUN apk update && apk add --no-cache \
   tzdata bash nano curl git zip unzip openssl \
   nginx nodejs npm mariadb-client \
@@ -23,13 +30,16 @@ RUN apk update && apk add --no-cache \
   && echo "extension=imagick.so" > /etc/php83/conf.d/00_imagick.ini \
   && rm -rf /tmp/pear /var/cache/apk/*
 
-# Tambahan blok PECL ext-http
-RUN pecl install raphf-2.0.1 \
-  && pecl install propro-2.1.0 \
-  && pecl install pecl_http-4.2.2 \
-  && echo "extension=raphf.so"   > /etc/php83/conf.d/00_raphf.ini \
-  && echo "extension=propro.so"  > /etc/php83/conf.d/00_propro.ini \
-  && echo "extension=http.so"    > /etc/php83/conf.d/00_http.ini
+# Salin hasil build dari Debian ke Alpine
+COPY --from=extbuilder /usr/local/lib/php/extensions/no-debug-non-zts-*/raphf.so /usr/lib/php83/modules/
+COPY --from=extbuilder /usr/local/lib/php/extensions/no-debug-non-zts-*/propro.so /usr/lib/php83/modules/
+COPY --from=extbuilder /usr/local/lib/php/extensions/no-debug-non-zts-*/http.so /usr/lib/php83/modules/
+
+# Aktifkan ext-nya
+RUN echo "extension=raphf.so"   > /etc/php83/conf.d/00_raphf.ini \
+ && echo "extension=propro.so"  > /etc/php83/conf.d/00_propro.ini \
+ && echo "extension=http.so"    > /etc/php83/conf.d/00_http.ini
+
 # Set the timezone (e.g., Asia/Makassar)
 ENV TZ=Asia/Makassar
 # Create a user
