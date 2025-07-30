@@ -18,7 +18,7 @@ env:
   DOCKER_USERNAME: ${{ secrets.DKA_DOCKER_USERNAME }}
   DOCKER_TOKEN: ${{ secrets.DKA_DOCKER_TOKEN }}
   DOCKER_REPO: ${{ secrets.DKA_DOCKER_REPO }}
-  DOCKER_TAG: ${{ secrets.DKA_DOCKER_TAG }}
+  DOCKER_TAG: ${{ secrets.DKA_DOCKER_TAG }}-prod
 
 jobs:
   build:
