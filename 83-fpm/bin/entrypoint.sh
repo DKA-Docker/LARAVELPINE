@@ -14,7 +14,7 @@ installing_packages() {
     composer install || echo "⚠️ composer install failed"
     yarn install --frozen-lockfile || echo "⚠️ yarn install failed"
   else
-    # Local dev install
+    # Local dev install NodeJS and composer
     composer install || echo "⚠️ composer install failed"
     yarn install || echo "⚠️ yarn install failed"
   fi
