@@ -1,26 +1,102 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-APP_NAME=${APP_NAME:-Laravel}
-# Set database credentials
-DB_HOST=${DB_HOST:-127.0.0.1}
-DB_PORT=${DB_PORT:-3306}
-DB_NAME=${DB_DATABASE:-laravel}
-DB_USER=${DB_USERNAME:-laravel}
-DB_PASS=${DB_PASSWORD:-laravel}
-# Set default values if environment variables are not provided
-BACKUP_DIR="/var/www/database/backups"
-# shellcheck disable=SC1001
-DATE=$(date +\%d-\%m-\%Y_\%H-\%M-\%S)
-BACKUP_FILE="$BACKUP_DIR/${APP_NAME}_databases_$DATE.sql.gz"
-# Create a backup directory if it doesn't exist
-mkdir -p $BACKUP_DIR
-echo "Backing up all databases..."
-# Create a backup of all databases and compress it into a .sql.gz file using mariadb tools
-ESCAPED_DB_PASSWORD=$(printf '%s' "$DB_PASS" | sed 's/[&/]/\\&/g')
-mariadb-dump -h"$DB_HOST" -P"$DB_PORT" -u $DB_USER -p"$ESCAPED_DB_PASSWORD" --databases $DB_NAME --single-transaction --add-drop-table --routines --triggers --events --verbose --force | gzip -9 > "$BACKUP_FILE"
+# =========================
+# Config (env override-able)
+# =========================
+APP_NAME="${APP_NAME:-Laravel}"
 
-if [ $? -eq 0 ]; then
-    echo "Backup completed successfully: $BACKUP_FILE"
+# DB creds
+DB_HOST="${DB_HOST:-127.0.0.1}"
+DB_PORT="${DB_PORT:-3306}"
+DB_NAME="${DB_DATABASE:-laravel}"
+DB_USER="${DB_USERNAME:-laravel}"
+DB_PASS="${DB_PASSWORD:-laravel}"
+
+# Paths
+BACKUP_DIR="${BACKUP_DIR:-/var/www/database/backups}"
+ASSET_DIR="${ASSET_DIR:-/var/www/storage/app/public}"
+
+# Timestamp (cron-safe)
+DATE="$(date +%d-%m-%Y_%H-%M-%S)"
+
+# Output files
+DB_FILE="$BACKUP_DIR/${APP_NAME}_db_mariadb_${DATE}.sql.gz"
+ASSET_FILE="$BACKUP_DIR/${APP_NAME}_assets_${DATE}.tar.gz"   # <— tanpa “mariadb”
+
+# =========================
+# Helpers
+# =========================
+log() { printf "[%s] %s\n" "$(date '+%H:%M:%S')" "$*"; }
+die() { printf "ERROR: %s\n" "$*" >&2; exit 1; }
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [--db] [--asset]
+
+Options:
+  --db       Backup database saja
+  --asset    Backup asset saja ($ASSET_DIR)
+Tanpa opsi → exit. Bisa kombinasikan: --db --asset
+EOF
+}
+
+# =========================
+# Arg parsing
+# =========================
+DO_DB=false
+DO_ASSET=false
+[[ $# -gt 0 ]] || { usage; exit 1; }
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --db) DO_DB=true; shift ;;
+    --asset) DO_ASSET=true; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) die "Argumen tidak dikenal: $1 (lihat --help)";;
+  esac
+done
+
+# =========================
+# Pre-flight
+# =========================
+mkdir -p "$BACKUP_DIR"
+
+DUMP_CMD=""
+if command -v mariadb-dump >/dev/null 2>&1; then
+  DUMP_CMD="mariadb-dump"
+elif command -v mysqldump >/dev/null 2>&1; then
+  DUMP_CMD="mysqldump"
 else
-    echo "Backup failed."
+  die "mariadb-dump/mysqldump tidak ditemukan di PATH"
 fi
+
+ESCAPED_DB_PASSWORD="$(printf '%s' "$DB_PASS" | sed 's/[&/\\]/\\&/g')"
+
+# =========================
+# Jobs
+# =========================
+backup_db() {
+  log "Backup DB: $DB_NAME → $DB_FILE"
+  "$DUMP_CMD" -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$ESCAPED_DB_PASSWORD" \
+    --databases "$DB_NAME" \
+    --single-transaction --add-drop-table --routines --triggers --events \
+    --verbose --force \
+  | gzip -9 > "$DB_FILE"
+  log "✅ DB backup OK → $DB_FILE"
+}
+
+backup_asset() {
+  [[ -d "$ASSET_DIR" ]] || die "Asset dir tidak ditemukan: $ASSET_DIR"
+  log "Backup Asset: $ASSET_DIR → $ASSET_FILE"
+  tar -czf "$ASSET_FILE" -C "$ASSET_DIR" .
+  log "✅ Asset backup OK → $ASSET_FILE"
+}
+
+# =========================
+# Execute selected
+# =========================
+$DO_DB && backup_db
+$DO_ASSET && backup_asset
+$DO_DB || $DO_ASSET || { usage; exit 1; }
+
+log "Selesai. File ada di: $BACKUP_DIR"

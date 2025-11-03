@@ -1,5 +1,5 @@
-REPOSITORY_NAME=yovanggaanandhika/php
-TAG_NAME=8.3-fpm-laravel
+REPOSITORY_NAME=yovanggaanandhika/laravelpine
+TAG_NAME=8.3-fpm
 
 default:
 	docker buildx build -t ${REPOSITORY_NAME}:${TAG_NAME} --load .
