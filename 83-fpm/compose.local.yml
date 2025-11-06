@@ -60,10 +60,12 @@ services:
     hostname: dka-image-laravelpine-mariadb
     restart: always
     environment:
+      # start this env config for first (init) database connection
       DKA_ROOT_PASSWORD: 'DHJAK12kndk2383dikhjfk34hjk4lk'
       DKA_DB_NAME: laravel
       DKA_DB_USERNAME: laravel
       DKA_DB_PASSWORD: laravel
+      # end this env config for first (init) database connection
       DKA_CRON_ENABLE: false
     deploy:
       resources:
