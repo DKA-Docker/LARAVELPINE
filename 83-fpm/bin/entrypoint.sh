@@ -2,6 +2,12 @@
 set -e
 
 ENV=${APP_ENV:-local}
+PHP_ENGINE=${DKA_PHP_OCTANE_ENGINE:-frankenphp}
+PHP_MAX_REQUEST=${DKA_PHP_OCTANE_MAX_REQUEST:-1000}
+PHP_WORKER=${DKA_PHP_OCTANE_WORKER:-4}
+PHP_HOST=${DKA_INTERNAL_HOST:-0.0.0.0}
+PHP_PORT=${DKA_INTERNAL_PORT:-80}
+PHP_ADMIN_PORT=${DKA_INTERNAL_ADMIN_PORT:-2019}
 
 # Cek dependencies penting
 command -v composer >/dev/null 2>&1 || { echo >&2 "❌ Composer not found."; exit 1; }
@@ -12,10 +18,18 @@ installing_packages() {
   if [ "$ENV" = "production" ]; then
     # Step 1: Install full composer & yarn for building
     composer install || echo "⚠️ composer install failed"
+    echo "🏗️ Installing PHP Octane ..."
+    composer require laravel/octane || echo "⚠️ Installing PHP Octane Failed"
+    echo "🏗️ Installing PHP Octane :: Module frankenphp ..."
+    yes | php artisan octane:install --server=frankenphp || echo "⚠️ Installing Module frankenphp on octane. failed"
     yarn install --frozen-lockfile || echo "⚠️ yarn install failed"
   else
     # Local dev install NodeJS and composer
     composer install || echo "⚠️ composer install failed"
+    echo "🏗️ Installing PHP Octane ..."
+    composer require laravel/octane || echo "⚠️ Installing PHP Octane Failed"
+    echo "🏗️ Installing PHP Octane :: Module frankenphp ..."
+    yes | php artisan octane:install --server=frankenphp || echo "⚠️ Installing Module frankenphp on octane. failed"
     yarn install || echo "⚠️ yarn install failed"
   fi
 }
@@ -76,14 +90,13 @@ running_dev_server() {
   else
     echo "⚠️ No dev server config detected."
   fi
-  php artisan serve --host=0.0.0.0 --port=80
+  php artisan octane:start --server=$PHP_ENGINE --host=$PHP_HOST --port=$PHP_PORT --admin-port=$PHP_ADMIN_PORT --watch || php artisan serve --host=$PHP_HOST --port=$PHP_PORT
 }
 
 running_prod_server() {
   artisan_command
   echo "🚀 Starting production server stack..."
-  php-fpm83 -F &  # PHP-FPM in foreground mode
-  nginx &         # Start Nginx in background
+  php artisan octane:start --server=$PHP_ENGINE --max-requests=$PHP_MAX_REQUEST --workers=$PHP_WORKER --host=$PHP_HOST --port=$PHP_PORT --admin-port=$PHP_ADMIN_PORT &
   echo "📈 Health monitoring active."
   wait
 }
