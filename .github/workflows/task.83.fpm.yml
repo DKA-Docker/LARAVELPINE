@@ -61,5 +61,5 @@ jobs:
           context: ./${{ env.APP_DIRECTORY }}
           file: ./${{ env.APP_DIRECTORY }}/Dockerfile
           push: true
-          platforms: linux/amd64,linux/386,linux/arm64/v8,linux/arm/v7,linux/ppc64le
+          platforms: linux/amd64,linux/386,linux/aarch64
           tags: ${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
