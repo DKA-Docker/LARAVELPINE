@@ -90,12 +90,17 @@ running_dev_server() {
   else
     echo "⚠️ No dev server config detected."
   fi
+  echo "🚀 Starting development queue stack..."
+  php artisan queue:work --sleep=3 --tries=3 &
+  echo "🚀 Starting development webserver stack..."
   php artisan octane:start --server=$PHP_ENGINE --host=$PHP_HOST --port=$PHP_PORT --admin-port=$PHP_ADMIN_PORT --watch || php artisan serve --host=$PHP_HOST --port=$PHP_PORT
 }
 
 running_prod_server() {
   artisan_command
-  echo "🚀 Starting production server stack..."
+  echo "🚀 Starting production queue stack..."
+  php artisan queue:work --sleep=3 --tries=3 &
+  echo "🚀 Starting production webserver stack..."
   php artisan octane:start --server=$PHP_ENGINE --max-requests=$PHP_MAX_REQUEST --workers=$PHP_WORKER --host=$PHP_HOST --port=$PHP_PORT --admin-port=$PHP_ADMIN_PORT &
   echo "📈 Health monitoring active."
   wait
