@@ -43,12 +43,19 @@ RUN composer create-project laravel/laravel .
 RUN composer require barryvdh/laravel-debugbar --dev
 RUN composer require laravel/octane
 RUN yes | php artisan octane:install --server=frankenphp
+# install packages NodeJS
+RUN yarn install
 # set permission laravel storage
-RUN chown -R www-data:www-data . && chmod -R 777 .
+RUN chown -R www-data:www-data storage && chown -R www-data:www-data bootstrap/cache
+RUN chmod -R 775 storage && chmod -R 775 bootstrap/cache && chmod -R ug+rwx storage bootstrap/cache
+# link storage secara default
+RUN php artisan storage:link
 # Configure entrypoint script
 COPY bin/* /usr/local/bin/
 # set Execution bin dir
 RUN chmod +x /usr/local/bin/*
+# Buat script Health Check
+HEALTHCHECK --interval=5s --timeout=3s --retries=5 CMD /usr/local/bin/healthcheck.sh
 # Expose ports
 EXPOSE 80 5173
 # Set the entrypoint to the script
