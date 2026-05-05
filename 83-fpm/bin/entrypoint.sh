@@ -11,17 +11,16 @@ PHP_ADMIN_PORT=${DKA_INTERNAL_ADMIN_PORT:-2019}
 
 # Cek dependencies penting
 command -v composer >/dev/null 2>&1 || { echo >&2 "❌ Composer not found."; exit 1; }
-command -v yarn >/dev/null 2>&1 || { echo >&2 "❌ Yarn not found."; exit 1; }
-command -v npm >/dev/null 2>&1 || { echo >&2 "❌ Yarn not found."; exit 1; }
+command -v bun >/dev/null 2>&1 || { echo >&2 "❌ Bun not found."; exit 1; }
 
 running_dev_server() {
   echo "🛠️ Running local dev servers..."
   if [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
     echo "🟢 Starting Vite dev server..."
-    yarn dev --host=0.0.0.0 &  # Run Vite in background
+    bun run dev --host=0.0.0.0 &  # Run Vite in background
   elif [ -f "webpack.mix.js" ]; then
     echo "🟢 Starting Laravel Mix watcher..."
-    yarn watch --host=0.0.0.0 &  # Run watcher in background
+    bun run watch --host=0.0.0.0 &  # Run watcher in background
   else
     echo "⚠️ No dev server config detected."
   fi

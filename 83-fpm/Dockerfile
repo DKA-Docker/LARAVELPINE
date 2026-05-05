@@ -2,10 +2,13 @@
 FROM alpine:3.21.0
 # Maintainer
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
+# Install Bun
+COPY --from=oven/bun:canary-alpine /usr/local/bin/bun /usr/local/bin/bun
+
 # Install system packages & PHP + build deps
 RUN apk update && apk add --no-cache \
   tzdata bash nano curl git zip unzip openssl \
-  nodejs npm mariadb-client \
+  mariadb-client \
   iputils iproute2 \
   imagemagick imagemagick-dev \
   libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev zlib-dev \
@@ -17,7 +20,6 @@ RUN apk update && apk add --no-cache \
   php83-sodium php83-sqlite3 php83-session php83-tokenizer php83-xml php83-xmlreader \
   php83-xmlwriter php83-zip php83-openssl php83-ldap \
   autoconf g++ make php83-dev php83-pear  \
-  && npm install -g yarn \
   && pecl install imagick \
   && echo "extension=imagick.so" > /etc/php83/conf.d/00_imagick.ini \
   && rm -rf /tmp/pear /var/cache/apk/*
