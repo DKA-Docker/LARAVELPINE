@@ -5,11 +5,11 @@ FROM alpine:3.21.0
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
 
 # Install Bun
-COPY --from=oven/bun:canary-alpine /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=oven/bun:alpine /usr/local/bin/bun /usr/local/bin/bun
 
 # Install system packages & PHP + build deps
 RUN apk update && apk add --no-cache \
-  tzdata bash nano curl git zip unzip openssl \
+  tzdata bash nano curl git zip unzip openssl libc6-compat gcompat \
   mariadb-client postgresql-client \
   iputils iproute2 \
   imagemagick imagemagick-dev \

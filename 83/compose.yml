@@ -1,7 +1,7 @@
 name: dka-image-laravelpine
 services:
   app:
-    image: yovanggaanandhika/laravelpine:8.3-fpm
+    image: yovanggaanandhika/laravelpine:8.3
     container_name: dka-image-laravelpine-app
     hostname: dka-image-laravelpine-app
     restart: always

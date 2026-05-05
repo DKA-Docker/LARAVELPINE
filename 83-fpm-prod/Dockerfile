@@ -4,7 +4,7 @@ FROM alpine:3.21.0
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
 # Install system packages & PHP + build deps
 RUN apk update && apk add --no-cache \
-  tzdata bash nano curl git zip unzip openssl \
+  tzdata bash nano curl git zip unzip openssl libc6-compat gcompat \
   nginx nodejs npm mariadb-client postgresql-client \
   iputils iproute2 \
   imagemagick imagemagick-dev \
