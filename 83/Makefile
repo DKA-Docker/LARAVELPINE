@@ -12,5 +12,5 @@ delete:
 
 push:
 	docker buildx build \
-	--platform linux/amd64 \
+	--platform linux/amd64,linux/arm64 \
 	-t ${REPOSITORY_NAME}:${TAG_NAME} --progress=plain --push .
