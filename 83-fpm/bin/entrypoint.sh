@@ -27,6 +27,7 @@ running_dev_server() {
   echo "🚀 Starting development queue stack..."
   php artisan queue:work --sleep=3 --tries=1 &
   echo "🚀 Starting development webserver stack..."
+  [ -f "frankenphp" ] && chmod +x frankenphp
   php artisan octane:start --server=$PHP_ENGINE --host=$PHP_HOST --port=$PHP_PORT --admin-port=$PHP_ADMIN_PORT --watch --max-requests=1 --workers=1 || php artisan serve --host=$PHP_HOST --port=$PHP_PORT &
   echo "📈 Health monitoring active."
   wait
@@ -36,6 +37,7 @@ running_prod_server() {
   echo "🚀 Starting production queue stack..."
   php artisan queue:work --sleep=3 --tries=3 &
   echo "🚀 Starting production webserver stack..."
+  [ -f "frankenphp" ] && chmod +x frankenphp
   php artisan octane:start --server=$PHP_ENGINE --max-requests=$PHP_MAX_REQUEST --workers=$PHP_WORKER --host=$PHP_HOST --port=$PHP_PORT --admin-port=$PHP_ADMIN_PORT &
   echo "📈 Health monitoring active."
   wait
