@@ -5,13 +5,13 @@ on:
     branches:
       - prod
     paths:
-      - '83-fpm-w/**'
+      - '83-fpm/**'
       - '.github/workflows/task.83.fpm.yml'
   pull_request:
     branches:
       - prod
     paths:
-      - '83-fpm-w/**'
+      - '83-fpm/**'
       - '.github/workflows/task.83.fpm.yml'
 env:
   APP_DIRECTORY: 83-fpm
@@ -61,5 +61,5 @@ jobs:
           context: ./${{ env.APP_DIRECTORY }}
           file: ./${{ env.APP_DIRECTORY }}/Dockerfile
           push: true
-          platforms: linux/amd64,linux/386,linux/aarch64
+          platforms: linux/amd64,linux/386,linux/arm64/v8,linux/arm/v7
           tags: ${{ env.DOCKER_USERNAME }}/${{ env.DOCKER_REPO }}:${{ env.DOCKER_TAG }}
