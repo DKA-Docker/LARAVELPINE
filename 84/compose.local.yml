@@ -1,0 +1,96 @@
+name: dka-image-laravelpine
+services:
+  app:
+    build:
+      context: .
+    container_name: dka-image-laravelpine-app
+    hostname: dka-image-laravelpine-app
+    restart: always
+    pull_policy: always
+    depends_on:
+      - mariadb
+    environment:
+      APP_NAME: DKA
+      APP_ENV: production
+      APP_DEBUG: true
+      APP_KEY: base64:h4JBsKiwTs/2qFND2IGs7P41A9ONo+W4OuEB+jiRKDo=
+      APP_URL: http://localhost
+
+      FRONTEND_URL: http://localhost
+      ASSET_URL: http://localhost
+
+      APP_TIMEZONE: Asia/Makassar
+      DB_CONNECTION: mariadb
+      DB_HOST: dka-image-laravelpine-mariadb
+      DB_PORT: 3306
+      DB_DATABASE: laravel
+      DB_USERNAME: laravel
+      DB_PASSWORD: laravel
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.80"
+          memory: 128M
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        host_ip: 0.0.0.0
+      - target: 5173
+        published: 5173
+        protocol: tcp
+        host_ip: 0.0.0.0
+    #- uncomment for sync project and data in container
+    #volumes:
+    #  - type: bind
+    #    source: .
+    #    target: /var/www
+    networks:
+      - default
+
+  mariadb:
+    image: yovanggaanandhika/mariadb:latest
+    container_name: dka-image-laravelpine-mariadb
+    hostname: dka-image-laravelpine-mariadb
+    restart: always
+    environment:
+      # start this env config for first (init) database connection
+      DKA_ROOT_PASSWORD: 'DHJAK12kndk2383dikhjfk34hjk4lk'
+      DKA_DB_NAME: laravel
+      DKA_DB_USERNAME: laravel
+      DKA_DB_PASSWORD: laravel
+      # end this env config for first (init) database connection
+      DKA_CRON_ENABLE: false
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+          cpus: '1.0'
+        reservations:
+          memory: 200M
+          cpus: '0.8'
+    volumes:
+      - type: volume
+        source: mariadb-data
+        target: /var/lib/mysql
+      - type: volume
+        source: mariadb-backup
+        target: /backup
+    networks:
+      - default
+
+volumes:
+  mariadb-data:
+    name: dka-image-laravelpine-mariadb-data
+    driver: local
+  mariadb-backup:
+    name: dka-image-laravelpine-mariadb-backup
+    driver: local
+
+networks:
+  default:
+    name: dka-image-laravelpine
+    driver: bridge
