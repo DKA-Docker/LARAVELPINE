@@ -17,13 +17,10 @@ RUN apk update && apk add --no-cache \
   php84-intl php84-json php84-mbstring php84-mysqli php84-mysqlnd php84-pdo \
   php84-pdo_mysql php84-pdo_sqlite php84-pdo_pgsql php84-pgsql php84-simplexml php84-soap php84-sockets \
   php84-sodium php84-sqlite3 php84-session php84-tokenizer php84-xml php84-xmlreader \
-  php84-xmlwriter php84-zip php84-openssl php84-ldap \
-  autoconf g++ make php84-dev php84-pear  \
-  && pecl install imagick \
-  && echo "extension=imagick.so" > /etc/php84/conf.d/00_imagick.ini \
+  php84-xmlwriter php84-zip php84-openssl php84-ldap php84-pecl-imagick \
   && curl -fsSL https://bun.sh/install | bash \
   && mv /root/.bun/bin/bun /usr/local/bin/bun \
-  && rm -rf /tmp/pear /var/cache/apk/*
+  && rm -rf /var/cache/apk/*
 
 # Set the timezone (e.g., Asia/Makassar)
 ENV TZ=Asia/Makassar
