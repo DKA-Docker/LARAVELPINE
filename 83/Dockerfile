@@ -4,9 +4,6 @@ FROM alpine:3.21.0
 # Maintainer
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
 
-# Install Bun
-COPY --from=oven/bun:alpine /usr/local/bin/bun /usr/local/bin/bun
-
 # Install system packages & PHP + build deps
 RUN apk update && apk add --no-cache \
   tzdata bash nano curl git zip unzip openssl libc6-compat gcompat \
@@ -24,6 +21,8 @@ RUN apk update && apk add --no-cache \
   autoconf g++ make php83-dev php83-pear  \
   && pecl install imagick \
   && echo "extension=imagick.so" > /etc/php83/conf.d/00_imagick.ini \
+  && curl -fsSL https://bun.sh/install | bash \
+  && mv /root/.bun/bin/bun /usr/local/bin/bun \
   && rm -rf /tmp/pear /var/cache/apk/*
 
 # Set the timezone (e.g., Asia/Makassar)
@@ -56,8 +55,8 @@ RUN composer create-project laravel/laravel .
 # install addons package
 RUN composer require barryvdh/laravel-debugbar --dev
 RUN composer require laravel/octane
-RUN yes | php artisan octane:install --server=frankenphp
-RUN chmod +x frankenphp
+#RUN yes | php artisan octane:install --server=frankenphp
+#RUN chmod +x frankenphp
 
 # install packages with Bun
 RUN bun install
