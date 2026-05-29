@@ -1,5 +1,5 @@
 # Use the official Alpine Linux image as a base
-FROM alpine:3.21.0
+FROM alpine:3.23.0
 
 # Maintainer
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
