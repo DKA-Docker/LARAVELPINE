@@ -9,10 +9,19 @@ DB_PASS=${DB_PASSWORD:-laravel}
 # Set default values if environment variables are not provided
 BACKUP_DIR="/var/www/database/backups"
 
-# Get the list of up to 20 .sql.gz files sorted by modification time
-# shellcheck disable=SC2207
-# shellcheck disable=SC2012
-BACKUP_FILES=($(ls -1t $BACKUP_DIR/*.sql.gz 2>/dev/null | head -n 50))
+# Get the list of backup files sorted by modification time
+# Supporting .sql, .sql.gz, .sql.zip, .zip, .gz
+BACKUP_FILES=()
+if [ -d "$BACKUP_DIR" ]; then
+    while IFS= read -r file; do
+        [ -z "$file" ] && continue
+        case "$file" in
+            *.sql|*.sql.gz|*.sql.zip|*.zip|*.gz)
+                BACKUP_FILES+=("$BACKUP_DIR/$file")
+                ;;
+        esac
+    done < <(ls -1t "$BACKUP_DIR" 2>/dev/null)
+fi
 
 # If no files are found, display a message and exit
 if [ ${#BACKUP_FILES[@]} -eq 0 ]; then
@@ -27,13 +36,14 @@ PS3="Select a backup file to restore: "
 MENU_OPTIONS=()
 for file in "${BACKUP_FILES[@]}"; do
     FILE_SIZE=$(du -h "$file" | awk '{print $1}')
-    MENU_OPTIONS+=("$(basename "$file" .sql.gz) ($FILE_SIZE)")
+    MENU_OPTIONS+=("$(basename "$file") ($FILE_SIZE)")
 done
 
 # Display menu for selecting a file
 select CHOICE in "${MENU_OPTIONS[@]}"; do
-    # Get the selected file name without the size
-    SELECTED_FILE=$(echo "$CHOICE" | awk -F' ' '{print $1}')
+    # Get the selected file name (everything before the last size component)
+    # Split by ' (' to handle space in filenames correctly
+    SELECTED_FILE=$(echo "$CHOICE" | awk -F' \(' '{print $1}')
 
     # Check if the user made a valid selection
     if [ -z "$SELECTED_FILE" ]; then
@@ -45,12 +55,29 @@ select CHOICE in "${MENU_OPTIONS[@]}"; do
 done
 
 # Get the full path of the selected backup file
-SELECTED_BACKUP_PATH="$BACKUP_DIR/$SELECTED_FILE.sql.gz"
-echo "Restoring database from $SELECTED_BACKUP_PATH..."
+SELECTED_BACKUP_PATH="$BACKUP_DIR/$SELECTED_FILE"
 
 ESCAPED_DB_PASSWORD=$(printf '%s' "$DB_PASS" | sed 's/[&/]/\\&/g')
-# Restore the selected backup file
-gunzip < "$SELECTED_BACKUP_PATH" | mariadb -h"$DB_HOST" -P"$DB_PORT" -u $DB_USER -p"$ESCAPED_DB_PASSWORD" $DB_NAME
+
+# Detect based on magic bytes or file extension (smart detection)
+MAGIC=""
+if command -v hexdump >/dev/null 2>&1; then
+    MAGIC=$(hexdump -n 2 -e '/1 "%02x"' "$SELECTED_BACKUP_PATH" 2>/dev/null)
+elif command -v od >/dev/null 2>&1; then
+    MAGIC=$(od -An -tx1 -N2 "$SELECTED_BACKUP_PATH" 2>/dev/null | tr -d '[:space:]')
+fi
+
+if [[ "$MAGIC" == "1f8b" ]] || [[ "$SELECTED_BACKUP_PATH" =~ \.(gz|sql\.gz)$ ]]; then
+    echo "Detected gzipped SQL file. Restoring database from $SELECTED_BACKUP_PATH..."
+    gunzip < "$SELECTED_BACKUP_PATH" | mariadb -h"$DB_HOST" -P"$DB_PORT" -u "$DB_USER" -p"$ESCAPED_DB_PASSWORD" "$DB_NAME"
+elif [[ "$MAGIC" == "504b" ]] || [[ "$SELECTED_BACKUP_PATH" =~ \.(zip|sql\.zip)$ ]]; then
+    echo "Detected zipped SQL file. Restoring database from $SELECTED_BACKUP_PATH..."
+    unzip -p "$SELECTED_BACKUP_PATH" | mariadb -h"$DB_HOST" -P"$DB_PORT" -u "$DB_USER" -p"$ESCAPED_DB_PASSWORD" "$DB_NAME"
+else
+    echo "Detected plain SQL file. Restoring database from $SELECTED_BACKUP_PATH..."
+    mariadb -h"$DB_HOST" -P"$DB_PORT" -u "$DB_USER" -p"$ESCAPED_DB_PASSWORD" "$DB_NAME" < "$SELECTED_BACKUP_PATH"
+fi
+
 # shellcheck disable=SC2181
 if [ $? -eq 0 ]; then
     echo "Restore completed successfully."
