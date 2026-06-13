@@ -18,6 +18,7 @@ RUN apk update && apk add --no-cache \
   php84-pdo_mysql php84-pdo_sqlite php84-pdo_pgsql php84-pgsql php84-simplexml php84-soap php84-sockets \
   php84-sodium php84-sqlite3 php84-session php84-tokenizer php84-xml php84-xmlreader \
   php84-xmlwriter php84-zip php84-openssl php84-ldap php84-pecl-imagick \
+  && ln -sf /usr/bin/php84 /usr/bin/php \
   && curl -fsSL https://bun.sh/install | bash \
   && mv /root/.bun/bin/bun /usr/local/bin/bun \
   && rm -rf /var/cache/apk/*
