@@ -9,6 +9,7 @@ PHP_WORKER=${DKA_PHP_OCTANE_WORKER:-4}
 PHP_HOST=${DKA_INTERNAL_HOST:-0.0.0.0}
 PHP_PORT=${DKA_INTERNAL_PORT:-80}
 PHP_ADMIN_PORT=${DKA_INTERNAL_ADMIN_PORT:-2019}
+DEV_DISABLED_NPM_SERVE=${DKA_DEV_DISABLED_NPM_SERVE:-false}
 
 # --- System Info & Logger ---
 log() {
@@ -40,15 +41,31 @@ trap cleanup SIGINT SIGTERM
 command -v composer >/dev/null 2>&1 || { log "❌ Composer not found."; exit 1; }
 command -v bun >/dev/null 2>&1 || { log "❌ Bun not found."; exit 1; }
 
+# Fungsi untuk cek apakah perintah Artisan tersedia
+has_artisan_command() {
+  php artisan list | grep "$1" > /dev/null 2>&1
+}
+
 running_dev_server() {
   log "🛠️ Starting local dev stack..."
-  if [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
-    log "🟢 Starting Vite..."
-    bun run dev -- --host 0.0.0.0 --cors &
-  elif [ -f "webpack.mix.js" ]; then
-    log "🟢 Starting Laravel Mix..."
-    bun run watch -- --host 0.0.0.0 --cors &
+  if [ -d "node_modules" ]; then
+    if [ "$DEV_DISABLED_NPM_SERVE" != "true" ]; then
+      if [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
+        log "🟢 Starting Vite..."
+        bun run dev -- --host 0.0.0.0 --cors &
+      elif [ -f "webpack.mix.js" ]; then
+        log "🟢 Starting Laravel Mix..."
+        bun run watch -- --host 0.0.0.0 --cors &
+      fi
+    fi
   fi
+
+  # --- Tambahan untuk Reverb ---
+  if has_artisan_command "reverb:start"; then
+    log "📡 Starting Reverb server (debug mode)..."
+    php artisan reverb:start --debug &
+  fi
+  # -----------------------------
 
   log "🚀 Starting Queue & Octane (Watch Mode)..."
   php artisan queue:work --sleep=3 --tries=1 &
@@ -59,6 +76,13 @@ running_dev_server() {
 }
 
 running_prod_server() {
+  # --- Tambahan untuk Reverb ---
+  if has_artisan_command "reverb:start"; then
+    log "📡 Starting Reverb server..."
+    php artisan reverb:start &
+  fi
+  # -----------------------------
+
   log "🚀 Starting production stack..."
   php artisan queue:work --sleep=3 --tries=3 &
 

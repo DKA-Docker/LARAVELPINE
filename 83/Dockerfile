@@ -24,7 +24,6 @@ RUN apk update && apk add --no-cache \
   && curl -fsSL https://bun.sh/install | bash \
   && mv /root/.bun/bin/bun /usr/local/bin/bun \
   && rm -rf /tmp/pear /var/cache/apk/*
-
 # Set the timezone (e.g., Asia/Makassar)
 ENV TZ=Asia/Makassar
 
@@ -55,12 +54,11 @@ RUN composer create-project laravel/laravel .
 # install addons package
 RUN composer require barryvdh/laravel-debugbar --dev
 RUN composer require laravel/octane
-#RUN yes | php artisan octane:install --server=frankenphp
-#RUN chmod +x frankenphp
+RUN yes | php artisan octane:install --server=frankenphp
+RUN chmod +x frankenphp
 
 # install packages with Bun
 RUN bun install
-
 # set permission laravel storage
 RUN chown -R www-data:www-data storage && chown -R www-data:www-data bootstrap/cache
 RUN chmod -R 775 storage && chmod -R 775 bootstrap/cache && chmod -R ug+rwx storage bootstrap/cache
