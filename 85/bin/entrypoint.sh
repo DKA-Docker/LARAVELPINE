@@ -40,6 +40,11 @@ trap cleanup SIGINT SIGTERM
 command -v composer >/dev/null 2>&1 || { log "❌ Composer not found."; exit 1; }
 command -v bun >/dev/null 2>&1 || { log "❌ Bun not found."; exit 1; }
 
+# Fungsi untuk cek apakah perintah Artisan tersedia
+has_artisan_command() {
+  php artisan list | grep "$1" > /dev/null 2>&1
+}
+
 running_dev_server() {
   log "🛠️ Starting local dev stack..."
   if [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
@@ -50,6 +55,13 @@ running_dev_server() {
     bun run watch -- --host 0.0.0.0 --cors &
   fi
 
+  # --- Tambahan untuk Reverb ---
+  if has_artisan_command "reverb:start"; then
+    log "📡 Starting Reverb server (debug mode)..."
+    php artisan reverb:start --debug &
+  fi
+  # -----------------------------
+
   log "🚀 Starting Queue & Octane (Watch Mode)..."
   php artisan queue:work --sleep=3 --tries=1 &
   [ -f "frankenphp" ] && chmod +x frankenphp
@@ -59,6 +71,13 @@ running_dev_server() {
 }
 
 running_prod_server() {
+  # --- Tambahan untuk Reverb ---
+  if has_artisan_command "reverb:start"; then
+    log "📡 Starting Reverb server..."
+    php artisan reverb:start &
+  fi
+  # -----------------------------
+
   log "🚀 Starting production stack..."
   php artisan queue:work --sleep=3 --tries=3 &
 
