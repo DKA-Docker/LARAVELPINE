@@ -25,7 +25,9 @@ RUN apk update && apk add --no-cache \
   && mv /root/.bun/bin/bun /usr/local/bin/bun \
   && rm -rf /tmp/pear /var/cache/apk/*
 # Set the timezone (e.g., Asia/Makassar)
-ENV TZ=Asia/Makassar
+ENV TZ=Asia/Makassar \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Create a user
 RUN adduser -S www-data -G www-data

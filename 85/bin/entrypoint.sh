@@ -62,6 +62,16 @@ running_dev_server() {
   fi
   # -----------------------------
 
+
+  # --- Tambahan untuk WhatsApp ---
+  if has_artisan_command "whatsapp:web:listen"; then
+    log "💬 Starting WhatsApp sidecar and listener (debug mode)..."
+    php artisan whatsapp:sidecar:start &
+    sleep 2
+    php artisan whatsapp:web:listen &
+  fi
+  # -----------------------------
+
   log "🚀 Starting Queue & Octane (Watch Mode)..."
   php artisan queue:work --sleep=3 --tries=1 &
   [ -f "frankenphp" ] && chmod +x frankenphp
@@ -75,6 +85,16 @@ running_prod_server() {
   if has_artisan_command "reverb:start"; then
     log "📡 Starting Reverb server..."
     php artisan reverb:start &
+  fi
+  # -----------------------------
+
+
+  # --- Tambahan untuk WhatsApp ---
+  if has_artisan_command "whatsapp:web:listen"; then
+    log "💬 Starting WhatsApp sidecar and listener..."
+    php artisan whatsapp:sidecar:start &
+    sleep 2
+    php artisan whatsapp:web:listen &
   fi
   # -----------------------------
 

@@ -24,7 +24,9 @@ RUN apk update && apk add --no-cache \
   && echo "extension=imagick.so" > /etc/php83/conf.d/00_imagick.ini \
   && rm -rf /tmp/pear /var/cache/apk/*
 # Set the timezone (e.g., Asia/Makassar)
-ENV TZ=Asia/Makassar
+ENV TZ=Asia/Makassar \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 # Create a user
 RUN adduser -S www-data -G www-data
 # Create the application directory

@@ -6,7 +6,7 @@ LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
 
 # Install system packages & PHP + build deps
 RUN apk update && apk add --no-cache aws-cli \
-  chromium nss freetype harfbuzz ca-certificates ttf-freefont \
+  chromium nss freetype harfbuzz ca-certificates ttf-freefont nodejs npm \
   tzdata bash nano curl git zip unzip openssl libc6-compat gcompat \
   mariadb-client postgresql-client \
   iputils iproute2 \
@@ -25,7 +25,9 @@ RUN apk update && apk add --no-cache aws-cli \
   && rm -rf /var/cache/apk/*
 
 # Set the timezone (e.g., Asia/Makassar)
-ENV TZ=Asia/Makassar
+ENV TZ=Asia/Makassar \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Create a user
 RUN adduser -S www-data -G www-data
