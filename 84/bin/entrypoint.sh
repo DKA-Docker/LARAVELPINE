@@ -1,7 +1,27 @@
 #!/bin/bash
 set -e
 
-# --- Configurations ---
+# =============================================================================
+# DKA Laravel Entrypoint — Optimized Process Manager
+# =============================================================================
+#
+# Process Feature Flags (all default: false = DISABLED)
+#   DKA_ENABLE_QUEUE      → php artisan queue:work
+#   DKA_ENABLE_VITE       → bun run dev / watch  (dev env only)
+#   DKA_ENABLE_REVERB     → php artisan reverb:start
+#   DKA_ENABLE_WHATSAPP   → php artisan whatsapp:sidecar:start + whatsapp:web:listen
+#   DKA_ENABLE_SCHEDULER  → php artisan schedule:work
+#
+# Web server (Octane / artisan serve) is ALWAYS ON and cannot be disabled.
+#
+# Design notes:
+#   - All optional processes run in the background (&).
+#   - The web server runs in the FOREGROUND as the "critical" process.
+#     If it exits/crashes, the entrypoint exits → Docker/K8s restarts the container.
+#   - cleanup() sends SIGTERM → waits 5s → SIGKILL to all child processes.
+# =============================================================================
+
+# --- Core Configurations ---
 ENV=${APP_ENV:-local}
 PHP_ENGINE=${DKA_PHP_OCTANE_ENGINE:-frankenphp}
 PHP_MAX_REQUEST=${DKA_PHP_OCTANE_MAX_REQUEST:-1000}
@@ -10,114 +30,190 @@ PHP_HOST=${DKA_INTERNAL_HOST:-0.0.0.0}
 PHP_PORT=${DKA_INTERNAL_PORT:-80}
 PHP_ADMIN_PORT=${DKA_INTERNAL_ADMIN_PORT:-2019}
 
-# --- System Info & Logger ---
-log() {
-  echo -e "\e[90m$(date +'%H:%M:%S')\e[0m \033[0;32mINFO\033[0m ▶ $1"
-}
+# --- Process Feature Flags ---
+DKA_ENABLE_OCTANE=${DKA_ENABLE_OCTANE:-true}       # Web server — default ON
+DKA_ENABLE_QUEUE=${DKA_ENABLE_QUEUE:-false}
+DKA_ENABLE_VITE=${DKA_ENABLE_VITE:-false}
+DKA_ENABLE_REVERB=${DKA_ENABLE_REVERB:-false}
+DKA_ENABLE_WHATSAPP=${DKA_ENABLE_WHATSAPP:-false}
+DKA_ENABLE_SCHEDULER=${DKA_ENABLE_SCHEDULER:-false}
 
-# Resource detection (LXC/Docker/K8s friendly)
+# --- Logger ---
+log()  { echo -e "\e[90m$(date +'%H:%M:%S')\e[0m \033[0;32mINFO\033[0m  ▶ $1"; }
+warn() { echo -e "\e[90m$(date +'%H:%M:%S')\e[0m \033[0;33mWARN\033[0m  ▶ $1"; }
+err()  { echo -e "\e[90m$(date +'%H:%M:%S')\e[0m \033[0;31mERROR\033[0m ▶ $1"; }
+
+# --- System Info ---
 LARAVEL_VER=$(php artisan --version 2>/dev/null | awk '{print $3}')
-MEM_USAGE=$([ -f /sys/fs/cgroup/memory/memory.usage_in_bytes ] && awk '{printf "%.2f MB", $1/1024/1024}' /sys/fs/cgroup/memory/memory.usage_in_bytes || free -m | awk '/Mem:/ { print $3 " MB" }')
+MEM_USAGE=$([ -f /sys/fs/cgroup/memory/memory.usage_in_bytes ] \
+  && awk '{printf "%.2f MB", $1/1024/1024}' /sys/fs/cgroup/memory/memory.usage_in_bytes \
+  || free -m | awk '/Mem:/ { print $3 " MB" }')
 CPU_LOAD=$(top -bn1 | grep "CPU" | awk '{print $2 + $4 "%"}' | head -n1)
 
-echo "--------------------------------------------------------"
-log "Laravel: v$LARAVEL_VER | Env: $ENV"
-log "System: CPU $CPU_LOAD | RAM $MEM_USAGE"
-echo "--------------------------------------------------------"
+_on()  { echo -e "\033[0;32m ON\033[0m"; }
+_off() { echo -e "\033[0;90moff\033[0m"; }
 
-# --- Process Management ---
-# Fungsi untuk mematikan semua background process saat container distop
+echo "╔══════════════════════════════════════════════════╗"
+log  " Laravel    : v$LARAVEL_VER  |  Env: $ENV"
+log  " System     : CPU $CPU_LOAD  |  RAM $MEM_USAGE"
+log  " Processes  :"
+log  "   octane / serve  →  $([ "$DKA_ENABLE_OCTANE"   = "true" ] && _on || _off)  [DKA_ENABLE_OCTANE]"
+log  "   queue:work      →  $([ "$DKA_ENABLE_QUEUE"     = "true" ] && _on || _off)  [DKA_ENABLE_QUEUE]"
+log  "   reverb:start    →  $([ "$DKA_ENABLE_REVERB"    = "true" ] && _on || _off)  [DKA_ENABLE_REVERB]"
+log  "   whatsapp        →  $([ "$DKA_ENABLE_WHATSAPP"  = "true" ] && _on || _off)  [DKA_ENABLE_WHATSAPP]"
+log  "   schedule:work   →  $([ "$DKA_ENABLE_SCHEDULER" = "true" ] && _on || _off)  [DKA_ENABLE_SCHEDULER]"
+if [ "$ENV" != "production" ]; then
+  log "   vite / mix      →  $([ "$DKA_ENABLE_VITE" = "true" ] && _on || _off)  [DKA_ENABLE_VITE]"
+fi
+echo "╚══════════════════════════════════════════════════╝"
+
+# --- Graceful Shutdown ---
 cleanup() {
   log "🛑 Shutting down gracefully..."
-  kill $(jobs -p) 2>/dev/null
+  local pids
+  pids=$(jobs -p 2>/dev/null)
+  if [ -n "$pids" ]; then
+    echo "$pids" | xargs -r kill -TERM 2>/dev/null || true
+    sleep 5
+    echo "$pids" | xargs -r kill -KILL 2>/dev/null || true
+  fi
+  wait 2>/dev/null || true
+  log "✅ All processes stopped."
   exit 0
 }
 
-# Trap signals for Docker/K8s/LXC
 trap cleanup SIGINT SIGTERM
 
-# Check dependencies
-command -v composer >/dev/null 2>&1 || { log "❌ Composer not found."; exit 1; }
-command -v bun >/dev/null 2>&1 || { log "❌ Bun not found."; exit 1; }
+# --- Pre-flight Checks ---
+command -v composer >/dev/null 2>&1 || { err "Composer not found."; exit 1; }
+command -v bun      >/dev/null 2>&1 || { err "Bun not found.";      exit 1; }
 
-# Fungsi untuk cek apakah perintah Artisan tersedia
 has_artisan_command() {
-  php artisan list | grep "$1" > /dev/null 2>&1
+  php artisan list 2>/dev/null | grep -q "$1"
 }
 
-running_dev_server() {
-  log "🛠️ Starting local dev stack..."
-  if [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
-    log "🟢 Starting Vite..."
-    bun run dev -- --host 0.0.0.0 --cors &
-  elif [ -f "webpack.mix.js" ]; then
-    log "🟢 Starting Laravel Mix..."
-    bun run watch -- --host 0.0.0.0 --cors &
+is_enabled() { [ "$1" = "true" ]; }
+
+# --- Background Processes ---
+start_background_processes() {
+  local MODE=$1  # "dev" or "prod"
+
+  # ── Vite / Laravel Mix (dev only) ─────────────────────────────────────────
+  if [ "$MODE" = "dev" ] && is_enabled "$DKA_ENABLE_VITE"; then
+    if [ -d "node_modules" ]; then
+      if [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
+        log "🟢 Starting Vite..."
+        bun run dev -- --host 0.0.0.0 --cors &
+      elif [ -f "webpack.mix.js" ]; then
+        log "🟢 Starting Laravel Mix..."
+        bun run watch -- --host 0.0.0.0 --cors &
+      fi
+    else
+      warn "node_modules not found. Skipping Vite/Mix. Run: bun install"
+    fi
   fi
 
-  # --- Tambahan untuk Reverb ---
-  if has_artisan_command "reverb:start"; then
-    log "📡 Starting Reverb server (debug mode)..."
-    php artisan reverb:start --debug &
+  # ── Queue Worker ───────────────────────────────────────────────────────────
+  if is_enabled "$DKA_ENABLE_QUEUE"; then
+    log "⚙️  Starting Queue Worker..."
+    if [ "$MODE" = "dev" ]; then
+      php artisan queue:work --sleep=3 --tries=1 &
+    else
+      php artisan queue:work --sleep=3 --tries=3 &
+    fi
   fi
-  # -----------------------------
 
+  # ── Laravel Reverb (WebSocket) ─────────────────────────────────────────────
+  if is_enabled "$DKA_ENABLE_REVERB" && has_artisan_command "reverb:start"; then
+    log "📡 Starting Reverb WebSocket Server..."
+    if [ "$MODE" = "dev" ]; then
+      php artisan reverb:start --debug &
+    else
+      php artisan reverb:start &
+    fi
+  fi
 
-  # --- Tambahan untuk WhatsApp ---
-  if has_artisan_command "whatsapp:web:listen"; then
-    log "💬 Starting WhatsApp sidecar and listener (debug mode)..."
+  # ── WhatsApp Sidecar ───────────────────────────────────────────────────────
+  if is_enabled "$DKA_ENABLE_WHATSAPP" && has_artisan_command "whatsapp:web:listen"; then
+    log "💬 Starting WhatsApp Sidecar..."
     php artisan whatsapp:sidecar:start &
     sleep 2
     php artisan whatsapp:web:listen &
   fi
-  # -----------------------------
 
-  log "🚀 Starting Queue & Octane (Watch Mode)..."
-  php artisan queue:work --sleep=3 --tries=1 &
-  [ -f "frankenphp" ] && chmod +x frankenphp
-  # Versi dengan failback tetap terjaga
-  php artisan octane:start --server=$PHP_ENGINE --host=$PHP_HOST --port=$PHP_PORT --admin-port=$PHP_ADMIN_PORT --watch --max-requests=1 --workers=1 \
-  || php artisan serve --host=$PHP_HOST --port=$PHP_PORT &
+  # ── Laravel Scheduler ─────────────────────────────────────────────────────
+  if is_enabled "$DKA_ENABLE_SCHEDULER" && has_artisan_command "schedule:work"; then
+    log "🕐 Starting Laravel Scheduler..."
+    php artisan schedule:work &
+  fi
 }
 
-running_prod_server() {
-  # --- Tambahan untuk Reverb ---
-  if has_artisan_command "reverb:start"; then
-    log "📡 Starting Reverb server..."
-    php artisan reverb:start &
-  fi
-  # -----------------------------
-
-
-  # --- Tambahan untuk WhatsApp ---
-  if has_artisan_command "whatsapp:web:listen"; then
-    log "💬 Starting WhatsApp sidecar and listener..."
-    php artisan whatsapp:sidecar:start &
-    sleep 2
-    php artisan whatsapp:web:listen &
-  fi
-  # -----------------------------
-
-  log "🚀 Starting production stack..."
-  php artisan queue:work --sleep=3 --tries=3 &
+# --- Web Server (BACKGROUND — runs alongside other processes) ---
+# Uses a subshell (...)& so the octane→serve fallback stays contained
+# in one job. If both fail, the subshell exits → wait -n triggers → container restarts.
+start_web_server() {
+  local MODE=$1
 
   [ -f "frankenphp" ] && chmod +x frankenphp
-  php artisan octane:start --server=$PHP_ENGINE --max-requests=$PHP_MAX_REQUEST --workers=$PHP_WORKER --host=$PHP_HOST --port=$PHP_PORT --admin-port=$PHP_ADMIN_PORT &
+
+  if [ "$MODE" = "dev" ]; then
+    log "🚀 Starting Octane [dev/watch] on $PHP_HOST:$PHP_PORT..."
+    (
+      php artisan octane:start \
+        --server="$PHP_ENGINE" \
+        --host="$PHP_HOST" \
+        --port="$PHP_PORT" \
+        --admin-port="$PHP_ADMIN_PORT" \
+        --watch \
+        --max-requests=1 \
+        --workers=1 \
+      || {
+        warn "Octane failed. Falling back to 'php artisan serve'..."
+        php artisan serve --host="$PHP_HOST" --port="$PHP_PORT"
+      }
+    ) &
+  else
+    log "🚀 Starting Octane [production] on $PHP_HOST:$PHP_PORT..."
+    (
+      php artisan octane:start \
+        --server="$PHP_ENGINE" \
+        --host="$PHP_HOST" \
+        --port="$PHP_PORT" \
+        --admin-port="$PHP_ADMIN_PORT" \
+        --max-requests="$PHP_MAX_REQUEST" \
+        --workers="$PHP_WORKER" \
+      || {
+        warn "Octane failed. Falling back to 'php artisan serve'..."
+        php artisan serve --host="$PHP_HOST" --port="$PHP_PORT"
+      }
+    ) &
+  fi
 }
 
-# --- Execution ---
+# --- Main Execution ---
+# All processes (including Octane) run as background jobs (&).
+# wait -n is event-driven (OS SIGCHLD) — zero CPU polling.
+# The FIRST process to die triggers cleanup → container exits → Docker/K8s restarts.
+# This catches all failure modes uniformly: Octane crash, worker crash, etc.
+
 if [ "$ENV" = "production" ]; then
-  running_prod_server
+  start_background_processes "prod"
+  is_enabled "$DKA_ENABLE_OCTANE" && start_web_server "prod"
 else
-  running_dev_server
+  start_background_processes "dev"
+  is_enabled "$DKA_ENABLE_OCTANE" && start_web_server "dev"
 fi
 
-log "📈 Service is up and monitoring."
+# Guard: if nothing was started, bail out
+if [ -z "$(jobs -p 2>/dev/null)" ]; then
+  err "No processes were enabled. Set at least one DKA_ENABLE_* to true."
+  exit 1
+fi
 
-# Pengganti 'wait' statis: Loop efisien yang responsif terhadap signal
-# Script akan tetap jalan selama ada background jobs
-while jobs > /dev/null 2>&1; do
-  sleep 2
-done
+log "📈 All services running. Monitoring via wait -n (event-driven)..."
 
-log "⚠️ All processes have exited."
+# Block here until any ONE child process exits
+wait -n 2>/dev/null || true
+
+err "⚠️  A process exited unexpectedly. Container will stop and be restarted by Docker/K8s."
+cleanup
