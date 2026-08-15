@@ -11,11 +11,12 @@ RUN apk update && apk add --no-cache tini aws-cli \
   mariadb-client postgresql-client \
   iputils iproute2 \
   imagemagick \
-  php84 php84-fpm php84-cli php84-posix php84-pcntl php84-redis php84-bcmath php84-common php84-opcache php84-phar php84-ctype \
+  php84 php84-fpm php84-cli php84-posix php84-pcntl php84-pecl-redis php84-bcmath php84-common php84-opcache php84-phar php84-ctype \
   php84-curl php84-dom php84-exif php84-fileinfo php84-gd php84-gettext php84-iconv \
   php84-intl php84-json php84-mbstring php84-mysqli php84-mysqlnd php84-pdo \
   php84-pdo_mysql php84-pdo_sqlite php84-pdo_pgsql php84-pgsql php84-simplexml php84-soap php84-sockets \
   php84-sodium php84-sqlite3 php84-session php84-tokenizer php84-xml php84-xmlreader \
+  php84-gmp php84-pecl-apcu php84-pecl-igbinary php84-pecl-uuid php84-pecl-yaml php84-pecl-mailparse php84-bz2 \
   php84-xmlwriter php84-zip php84-openssl php84-ldap php84-pecl-imagick \
   && ln -sf /usr/bin/php84 /usr/bin/php \
   && curl -fsSL https://bun.sh/install | bash \

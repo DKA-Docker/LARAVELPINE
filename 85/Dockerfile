@@ -11,11 +11,12 @@ RUN apk update && apk add --no-cache tini aws-cli \
   mariadb-client postgresql-client \
   iputils iproute2 \
   imagemagick \
-  php85 php85-fpm php85-cli php85-posix php85-pcntl php85-redis php85-bcmath php85-common php85-phar php85-ctype \
+  php85 php85-fpm php85-cli php85-posix php85-pcntl php85-pecl-redis php85-bcmath php85-common php85-phar php85-ctype \
   php85-curl php85-dom php85-exif php85-fileinfo php85-gd php85-gettext php85-iconv \
   php85-intl php85-json php85-mbstring php85-mysqli php85-mysqlnd php85-pdo \
   php85-pdo_mysql php85-pdo_sqlite php85-pdo_pgsql php85-pgsql php85-simplexml php85-soap php85-sockets \
   php85-sodium php85-sqlite3 php85-session php85-tokenizer php85-xml php85-xmlreader \
+  php85-opcache php85-gmp php85-pecl-apcu php85-pecl-igbinary php85-pecl-uuid php85-pecl-yaml php85-pecl-mailparse php85-bz2 \
   php85-xmlwriter php85-zip php85-openssl php85-ldap php85-pecl-imagick \
   && ln -sf /usr/bin/php85 /usr/bin/php \
   && curl -fsSL https://bun.sh/install | bash \
