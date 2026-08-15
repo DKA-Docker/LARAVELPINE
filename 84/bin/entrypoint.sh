@@ -73,9 +73,10 @@ cleanup() {
   local pids
   pids=$(jobs -p 2>/dev/null)
   if [ -n "$pids" ]; then
-    echo "$pids" | xargs -r kill -TERM 2>/dev/null || true
+    # Portable kill — tidak pakai xargs -r karena busybox tidak mengenal flag -r
+    kill -TERM $pids 2>/dev/null || true
     sleep 5
-    echo "$pids" | xargs -r kill -KILL 2>/dev/null || true
+    kill -KILL $pids 2>/dev/null || true
   fi
   wait 2>/dev/null || true
   log "✅ All processes stopped."
@@ -88,8 +89,12 @@ trap cleanup SIGINT SIGTERM
 command -v composer >/dev/null 2>&1 || { err "Composer not found."; exit 1; }
 command -v bun      >/dev/null 2>&1 || { err "Bun not found.";      exit 1; }
 
+# Cache artisan command list sekali — menghindari multiple Laravel boots
+# (setiap php artisan list ~200-500ms)
+ARTISAN_LIST=$(php artisan list 2>/dev/null)
+
 has_artisan_command() {
-  php artisan list 2>/dev/null | grep -q "$1"
+  echo "$ARTISAN_LIST" | grep -q "$1"
 }
 
 is_enabled() { [ "$1" = "true" ]; }
@@ -137,7 +142,13 @@ start_background_processes() {
   if is_enabled "$DKA_ENABLE_WHATSAPP" && has_artisan_command "whatsapp:web:listen"; then
     log "💬 Starting WhatsApp Sidecar..."
     php artisan whatsapp:sidecar:start &
-    sleep 2
+    # Poll health sidecar sampai siap (max 15 detik), lebih reliable dari sleep hardcoded
+    _wa_timeout=15
+    until php artisan whatsapp:health --exit-code >/dev/null 2>&1 || [ "$_wa_timeout" -eq 0 ]; do
+      sleep 1
+      _wa_timeout=$((_wa_timeout - 1))
+    done
+    [ "$_wa_timeout" -eq 0 ] && warn "WhatsApp sidecar health check timed out, starting listener anyway..."
     php artisan whatsapp:web:listen &
   fi
 

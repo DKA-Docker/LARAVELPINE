@@ -5,7 +5,8 @@ FROM alpine:3.21.0
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
 
 # Install system packages & PHP + build deps
-RUN apk update && apk add --no-cache \
+RUN apk update && apk add --no-cache tini \
+  \
   tzdata bash nano curl git zip unzip openssl libc6-compat gcompat \
   mariadb-client postgresql-client \
   iputils iproute2 \
@@ -81,4 +82,4 @@ HEALTHCHECK --interval=5s --timeout=3s --retries=5 CMD /usr/local/bin/healthchec
 EXPOSE 80 5173
 
 # Set the entrypoint to the script
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "entrypoint.sh"]

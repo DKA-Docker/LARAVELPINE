@@ -3,7 +3,8 @@ FROM alpine:3.21.0
 # Maintainer
 LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
 # Install system packages & PHP + build deps
-RUN apk update && apk add --no-cache \
+RUN apk update && apk add --no-cache tini \
+  \
   tzdata bash nano curl git zip unzip openssl \
   nginx nodejs npm \
   iputils iproute2 \
@@ -55,4 +56,4 @@ RUN chmod +x /usr/local/bin/*
 # Expose ports
 EXPOSE 80
 # Set the entrypoint to the script
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "entrypoint.sh"]
