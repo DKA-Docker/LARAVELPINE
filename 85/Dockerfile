@@ -10,9 +10,7 @@ RUN apk update && apk add --no-cache tini aws-cli \
   tzdata bash nano curl git zip unzip openssl libc6-compat gcompat \
   mariadb-client postgresql-client \
   iputils iproute2 \
-  imagemagick imagemagick-dev \
-  libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev zlib-dev \
-  icu-dev gettext-dev libxml2-dev oniguruma-dev \
+  imagemagick \
   php85 php85-fpm php85-cli php85-posix php85-pcntl php85-redis php85-bcmath php85-common php85-phar php85-ctype \
   php85-curl php85-dom php85-exif php85-fileinfo php85-gd php85-gettext php85-iconv \
   php85-intl php85-json php85-mbstring php85-mysqli php85-mysqlnd php85-pdo \

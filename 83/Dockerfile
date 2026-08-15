@@ -6,13 +6,10 @@ LABEL maintainer="Yovangga Anandhika <dka.tech.dev@gmail.com>"
 
 # Install system packages & PHP + build deps
 RUN apk update && apk add --no-cache tini \
-  \
   tzdata bash nano curl git zip unzip openssl libc6-compat gcompat \
   mariadb-client postgresql-client \
   iputils iproute2 \
-  imagemagick imagemagick-dev \
-  libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev zlib-dev \
-  icu-dev gettext-dev libxml2-dev oniguruma-dev \
+  imagemagick \
   php83 php83-fpm php83-cli php83-posix php83-pcntl php83-redis php83-bcmath php83-common php83-opcache php83-phar php83-ctype \
   php83-curl php83-dom php83-exif php83-fileinfo php83-gd php83-gettext php83-iconv \
   php83-intl php83-json php83-mbstring php83-mysqli php83-mysqlnd php83-pdo \

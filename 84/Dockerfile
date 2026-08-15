@@ -10,9 +10,7 @@ RUN apk update && apk add --no-cache tini aws-cli \
   tzdata bash nano curl git zip unzip openssl libc6-compat gcompat \
   mariadb-client postgresql-client \
   iputils iproute2 \
-  imagemagick imagemagick-dev \
-  libpng-dev libjpeg-turbo-dev freetype-dev libzip-dev zlib-dev \
-  icu-dev gettext-dev libxml2-dev oniguruma-dev \
+  imagemagick \
   php84 php84-fpm php84-cli php84-posix php84-pcntl php84-redis php84-bcmath php84-common php84-opcache php84-phar php84-ctype \
   php84-curl php84-dom php84-exif php84-fileinfo php84-gd php84-gettext php84-iconv \
   php84-intl php84-json php84-mbstring php84-mysqli php84-mysqlnd php84-pdo \
