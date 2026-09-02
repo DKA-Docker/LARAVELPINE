@@ -5,20 +5,21 @@ set -e
 # DKA Laravel Entrypoint — Optimized Process Manager
 # =============================================================================
 #
-# Process Feature Flags (all default: false = DISABLED)
-#   DKA_ENABLE_QUEUE      → php artisan queue:work
-#   DKA_ENABLE_VITE       → bun run dev / watch  (dev env only)
-#   DKA_ENABLE_REVERB     → php artisan reverb:start
-#   DKA_ENABLE_WHATSAPP   → php artisan whatsapp:sidecar:start + whatsapp:web:listen
-#   DKA_ENABLE_SCHEDULER  → php artisan schedule:work
+# Process Feature Flags:
+#   DKA_ENABLE_OCTANE     → php artisan octane:start (default: true  = ON)
+#   DKA_ENABLE_QUEUE      → php artisan queue:work   (default: false = OFF)
+#   DKA_ENABLE_VITE       → bun run dev / watch      (default: false = OFF, dev only)
+#   DKA_ENABLE_REVERB     → php artisan reverb:start (default: false = OFF)
+#   DKA_ENABLE_WHATSAPP   → whatsapp:sidecar:start + whatsapp:web:listen
+#                                                    (default: false = OFF)
+#   DKA_ENABLE_SCHEDULER  → php artisan schedule:work (default: false = OFF)
 #
-# Web server (Octane / artisan serve) is ALWAYS ON and cannot be disabled.
-#
-# Design notes:
-#   - All optional processes run in the background (&).
-#   - The web server runs in the FOREGROUND as the "critical" process.
-#     If it exits/crashes, the entrypoint exits → Docker/K8s restarts the container.
-#   - cleanup() sends SIGTERM → waits 5s → SIGKILL to all child processes.
+# Design:
+#   - ALL processes run as background jobs (&).
+#   - wait -n is event-driven (OS SIGCHLD) — zero CPU polling.
+#   - The FIRST process to die triggers cleanup → container exits → Docker/K8s restarts.
+#   - When DKA_ENABLE_OCTANE=false: worker-only mode, wait -n still catches crashes.
+#   - cleanup(): SIGTERM → 5s → SIGKILL to all child processes.
 # =============================================================================
 
 # --- Core Configurations ---

@@ -16,7 +16,7 @@ RUN apk update && apk add --no-cache tini aws-cli \
   php85-intl php85-json php85-mbstring php85-mysqli php85-mysqlnd php85-pdo \
   php85-pdo_mysql php85-pdo_sqlite php85-pdo_pgsql php85-pgsql php85-simplexml php85-soap php85-sockets \
   php85-sodium php85-sqlite3 php85-session php85-tokenizer php85-xml php85-xmlreader \
-  php85-opcache php85-gmp php85-pecl-apcu php85-pecl-igbinary php85-pecl-uuid php85-pecl-yaml php85-pecl-mailparse php85-bz2 \
+  php85-gmp php85-bz2 php85-pecl-apcu php85-pecl-igbinary php85-pecl-uuid php85-pecl-yaml php85-pecl-mailparse \
   php85-xmlwriter php85-zip php85-openssl php85-ldap php85-pecl-imagick \
   && ln -sf /usr/bin/php85 /usr/bin/php \
   && curl -fsSL https://bun.sh/install | bash \
