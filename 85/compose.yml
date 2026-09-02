@@ -28,6 +28,11 @@ services:
       # image env
       DKA_PERMISSION_ROOT: false
       DKA_AUTO_MIGRATE: false
+      DKA_PHP_MEMORY_LIMIT: 512M
+      DKA_PHP_UPLOAD_MAX_FILESIZE: 100M
+      DKA_PHP_POST_MAX_SIZE: 100M
+      DKA_PHP_MAX_EXECUTION_TIME: 300
+      DKA_PHP_MAX_INPUT_VARS: 5000
     deploy:
       resources:
         limits:
