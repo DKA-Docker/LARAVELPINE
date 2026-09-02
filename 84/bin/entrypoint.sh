@@ -44,6 +44,18 @@ log()  { echo -e "\e[90m$(date +'%H:%M:%S')\e[0m \033[0;32mINFO\033[0m  ▶ $1";
 warn() { echo -e "\e[90m$(date +'%H:%M:%S')\e[0m \033[0;33mWARN\033[0m  ▶ $1"; }
 err()  { echo -e "\e[90m$(date +'%H:%M:%S')\e[0m \033[0;31mERROR\033[0m ▶ $1"; }
 
+# --- Dynamic PHP Configuration ---
+if [ -f /etc/php84/php.ini ]; then
+  if [ -n "$DKA_PHP_MEMORY_LIMIT" ] || [ -n "$DKA_PHP_UPLOAD_MAX_FILESIZE" ] || [ -n "$DKA_PHP_POST_MAX_SIZE" ] || [ -n "$DKA_PHP_MAX_EXECUTION_TIME" ] || [ -n "$DKA_PHP_MAX_INPUT_VARS" ]; then
+    log "⚙️  Applying custom PHP settings from ENV..."
+    [ -n "$DKA_PHP_MEMORY_LIMIT" ] && sed -i "s/^\s*memory_limit\s*=.*/memory_limit = ${DKA_PHP_MEMORY_LIMIT}/" /etc/php84/php.ini
+    [ -n "$DKA_PHP_UPLOAD_MAX_FILESIZE" ] && sed -i "s/^\s*upload_max_filesize\s*=.*/upload_max_filesize = ${DKA_PHP_UPLOAD_MAX_FILESIZE}/" /etc/php84/php.ini
+    [ -n "$DKA_PHP_POST_MAX_SIZE" ] && sed -i "s/^\s*post_max_size\s*=.*/post_max_size = ${DKA_PHP_POST_MAX_SIZE}/" /etc/php84/php.ini
+    [ -n "$DKA_PHP_MAX_EXECUTION_TIME" ] && sed -i "s/^\s*max_execution_time\s*=.*/max_execution_time = ${DKA_PHP_MAX_EXECUTION_TIME}/" /etc/php84/php.ini
+    [ -n "$DKA_PHP_MAX_INPUT_VARS" ] && sed -i "s/^;*\s*max_input_vars\s*=.*/max_input_vars = ${DKA_PHP_MAX_INPUT_VARS}/" /etc/php84/php.ini
+  fi
+fi
+
 # --- System Info ---
 LARAVEL_VER=$(php artisan --version 2>/dev/null | awk '{print $3}')
 MEM_USAGE=$([ -f /sys/fs/cgroup/memory/memory.usage_in_bytes ] \
